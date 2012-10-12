@@ -42,6 +42,16 @@ namespace DAVA
  */
 
 class KeyedArchive;
+    
+class Vector2;
+class Vector3;
+class Vector4;
+    
+struct Matrix2;
+struct Matrix3;
+struct Matrix4;
+    
+    
 class VariantType
 {
 public:
@@ -59,20 +69,40 @@ public:
 		TYPE_BYTE_ARRAY,
 		TYPE_UINT32,    
         TYPE_KEYED_ARCHIVE,
+        TYPE_INT64,
+        TYPE_UINT64,
+        TYPE_VECTOR2,
+        TYPE_VECTOR3,
+        TYPE_VECTOR4,
+        TYPE_MATRIX2,
+        TYPE_MATRIX3,
+        TYPE_MATRIX4,
         
         TYPES_COUNT // every new type should be always added to the end for compatibility with old archives
 	};
 	uint8 type;
 	union  
 	{
-		bool boolValue;
-		int32 int32Value;
-        uint32 uint32Value;
+		bool    boolValue;
+		int32   int32Value;
+        uint32  uint32Value;
 		float32 floatValue;
+        
+        int64*   pInt64;
+        uint64*  pUInt64;
+        
+        Vector2* pVector2;
+        Vector3* pVector3;
+        Vector4* pVector4;
+        
+        Matrix2* pMatrix2;
+        Matrix3* pMatrix3;
+        Matrix4* pMatrix4;
+        void*    pointerValue;
 	};
 	String stringValue;	
 	WideString wideStringValue;
-    void *pointerValue;
+
 	
 	// Functions
 	
@@ -125,7 +155,55 @@ public:
 	 \param[in] archive	archive to set (Archive is retains inside variable type)
 	 */
 	void SetKeyedArchive(KeyedArchive *archive);
-	
+    
+    /**
+     \brief Function to set int64 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetInt64(const int64 & value);
+    
+    /**
+     \brief Function to set uint64 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetUInt64(const uint64 & value);
+
+    /**
+     \brief Function to set Vector2 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetVector2(const Vector2 & value);
+
+    /**
+     \brief Function to set Vector3 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetVector3(const Vector3 & value);
+    
+    /**
+     \brief Function to set Vector4 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetVector4(const Vector4 & value);
+    
+    /**
+     \brief Function to set Matrix2 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetMatrix2(const Matrix2 & value);
+    
+    /**
+     \brief Function to set Matrix3 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetMatrix3(const Matrix3 & value);
+    
+    /**
+     \brief Function to set Matrix4 value to variant type variable
+     \param[in] value	value to set
+	 */
+	void SetMatrix4(const Matrix4 & value);
+    
 	/**
 		\brief Function to return bool value from variable
 		\returns value of variable, or generate assert if variable type is different
@@ -178,6 +256,55 @@ public:
 	 \returns value of variable, or generate assert if variable type is different
 	 */
      KeyedArchive *AsKeyedArchive() const;
+      
+    /**
+	 \brief Function to return int value from variable.Returns pointer to the int64 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     int64 AsInt64() const;
+
+    /**
+	 \brief Function to return unsigned int value from variable.Returns pointer to the uint64 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     uint64 AsUInt64() const;
+    
+    /**
+	 \brief Function to return vector2 from variable. Returns pointer to the vector2 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     Vector2  *AsVector2() const;
+    
+    /**
+	 \brief Function to return vector3 from variable. Returns pointer to the vector3 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     Vector3 *AsVector3() const;
+    
+    /**
+	 \brief Function to return vector4 from variable. Returns pointer to the vector4 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     Vector4 *AsVector4() const;
+    
+    /**
+	 \brief Function to return matrix2 from variable. Returns pointer to the matrix2 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     Matrix2 *AsMatrix2() const;
+    
+    /**
+	 \brief Function to return matrix3 from variable. Returns pointer to the matrix3 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     Matrix3 *AsMatrix3() const;
+    
+    /**
+	 \brief Function to return matrix4 from variable. Returns pointer to the matrix4 inside.
+	 \returns value of variable, or generate assert if variable type is different
+	 */
+     Matrix4 *AsMatrix4() const;
+    
     
 	// File read & write helpers
 	

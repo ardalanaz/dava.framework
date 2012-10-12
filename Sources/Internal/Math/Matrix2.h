@@ -33,6 +33,8 @@
 #include <math.h>
 #include "Base/BaseTypes.h"
 
+#define FLOAT_EQUAL(f1, f2) (fabsf(f1 - f2) < EPSILON)
+
 namespace DAVA
 {
 
@@ -72,6 +74,10 @@ struct Matrix2
 
 	inline Matrix2& operator += (const Matrix2 & arg);
 	inline Matrix2 operator +	(const Matrix2 & arg) const;
+    
+    //! Comparison operators
+	inline bool operator == (const Matrix2 & _m) const;
+	inline bool operator != (const Matrix2 & _m) const;
 };
 
 
@@ -147,7 +153,19 @@ inline Matrix2& Matrix2::operator -= (const Matrix2 & m)
 	return (*this = *this - m);
 }
 
-
+    //! Comparison operators
+inline bool Matrix2::operator == (const Matrix2 & _m) const
+{
+#define MATRIX2_DIMENSION 2
+    for (int k = 0; k < (MATRIX2_DIMENSION * MATRIX2_DIMENSION); ++k)
+       if (!FLOAT_EQUAL(data[k], _m.data[k]))return false;
+    return true;
+}
+    
+inline bool Matrix2::operator != (const Matrix2 & _m) const
+{
+    return ! Matrix2::operator==(_m);
+}
 
 
 };	// end of namespace DAVA

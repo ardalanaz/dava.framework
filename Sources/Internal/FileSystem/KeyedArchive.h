@@ -35,6 +35,13 @@
 #include "FileSystem/VariantType.h"
 #include "FileSystem/File.h"
 
+#include "Math/MathConstants.h"
+#include "Math/Matrix2.h"
+#include "Math/Matrix3.h"
+#include "Math/Matrix4.h"
+#include "Math/Math2D.h"
+
+
 namespace DAVA 
 {
 /**
@@ -133,6 +140,69 @@ public:
 	 */
 	KeyedArchive * GetArchive(const String & key, KeyedArchive * defaultValue = 0);
     
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	int64 GetInt64(const String & key, int64 defaultValue = 0);
+    
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	uint64 GetUInt64(const String & key, uint64 defaultValue = 0);
+    
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	Vector2* GetVector2(const String & key, Vector2 *defaultValue = NULL);
+    
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	Vector3* GetVector3(const String & key, Vector3 *defaultValue = NULL);
+    
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	Vector4* GetVector4(const String & key, Vector4 *defaultValue = NULL);
+
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	Matrix2* GetMatrix2(const String & key, Matrix2 *defaultValue = NULL);
+    
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	Matrix3* GetMatrix3(const String & key, Matrix3 *defaultValue = NULL);
+    
+    /**
+     \brief Function to get variable from archive.
+     \param[in] key string key
+     \param[in] defaultValue this is value that is used if variable with this key do not exists in archive
+     \returns value of variable or defaultValue if key isn't available
+	 */
+	Matrix4* GetMatrix4(const String & key, Matrix4 *defaultValue = NULL);
     /*
         \brief Function to get object from byte array.
         \param[in] key string key
@@ -213,6 +283,61 @@ public:
      \param[in] value we want to set for this key
 	 */
 	void SetArchive(const String & key, KeyedArchive * archive);
+    
+    /**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetInt64(const String & key, int64 &value);
+	/**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetUInt64(const String & key, uint64 &value);
+    
+	/**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetVector2(const String & key, Vector2 &value);
+    
+    /**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetVector3(const String & key, Vector3 &value);
+    
+    /**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetVector4(const String & key, Vector4 &value);
+
+    /**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetMatrix2(const String & key, Matrix2 &value);
+    
+    /**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetMatrix3(const String & key, Matrix3 &value);
+    
+    /**
+     \brief Function to set variable in archive.
+     \param[in] key string key
+     \param[in] value we want to set for this key
+	 */
+	void SetMatrix4(const String & key, Matrix4 &value);
     
     /**
         \brief Function to set value from template type to byte array.  
