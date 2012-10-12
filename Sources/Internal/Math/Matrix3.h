@@ -83,6 +83,9 @@ struct Matrix3
 
 	inline Matrix3& operator += (const Matrix3 & arg);
 	inline Matrix3 operator +	(const Matrix3 & arg) const;
+    
+    inline bool operator == (const Matrix3 & _m) const;
+	inline bool operator != (const Matrix3 & _m) const;
 };
 
 inline Vector2 operator * (const Vector2 & _v, const Matrix3 & _m);
@@ -300,6 +303,18 @@ inline bool Matrix3::GetInverse(Matrix3 & out, float32 fTolerance) const
 	return true;
 }
 	
+inline bool Matrix3::operator == (const Matrix3 & _m) const
+{
+#define MATRIX3_DIMENSION 3
+    for (int k = 0; k < (MATRIX3_DIMENSION * MATRIX3_DIMENSION); ++k)
+        if (!FLOAT_EQUAL(data[k], _m.data[k]))return false;
+    return true;
+}
+
+inline bool Matrix3::operator != (const Matrix3 & _m) const
+{
+    return ! Matrix3::operator==(_m);
+}
 
 };	// end of namespace DAVA
 

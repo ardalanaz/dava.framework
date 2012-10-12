@@ -217,7 +217,71 @@ void KeyedArchive::SetArchive(const String & key, KeyedArchive * archive)
 	objectMap[key] = variantValue;
 }
 
+void KeyedArchive::SetInt64(const String & key, int64 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetInt64(value);
+	objectMap[key] = variantValue;
+}
+
+void KeyedArchive::SetUInt64(const String & key, uint64 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetUInt64(value);
+	objectMap[key] = variantValue;
+}
+
+void KeyedArchive::SetVector2(const String & key, Vector2 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetVector2(value);
+	objectMap[key] = variantValue;
+}
+
+void KeyedArchive::SetVector3(const String & key, Vector3 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetVector3(value);
+	objectMap[key] = variantValue;
+}
+
+void KeyedArchive::SetVector4(const String & key, Vector4 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetVector4(value);
+	objectMap[key] = variantValue;
+}
+
+void KeyedArchive::SetMatrix2(const String & key, Matrix2 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetMatrix2(value);
+	objectMap[key] = variantValue;
+}
+
+void KeyedArchive::SetMatrix3(const String & key, Matrix3 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetMatrix3(value);
+	objectMap[key] = variantValue;
+}
+
+void KeyedArchive::SetMatrix4(const String & key, Matrix4 &value)
+{
+    DeleteKey(key);
+	VariantType *variantValue = new VariantType();
+	variantValue->SetMatrix4(value);
+	objectMap[key] = variantValue;
+}
 	
+    
 bool KeyedArchive::IsKeyExists(const String & key)
 {
 	Map<String, VariantType*>::iterator t = objectMap.find(key);
@@ -312,7 +376,63 @@ VariantType *KeyedArchive::GetVariant(const String & key)
 {
 	return objectMap[key];
 }
+    
+int64 KeyedArchive::GetInt64(const String & key, int64 defaultValue)
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsInt64();
+    return defaultValue;
+}
 
+uint64 KeyedArchive::GetUInt64(const String & key, uint64 defaultValue)
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsUInt64();
+    return defaultValue;
+}
+
+Vector2* KeyedArchive::GetVector2(const String & key, Vector2 *defaultValue )
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsVector2();
+    return defaultValue;
+}
+
+Vector3* KeyedArchive::GetVector3(const String & key, Vector3 *defaultValue )
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsVector3();
+    return defaultValue;
+}
+
+Vector4* KeyedArchive::GetVector4(const String & key, Vector4 *defaultValue )
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsVector4();
+    return defaultValue;
+}
+
+Matrix2* KeyedArchive::GetMatrix2(const String & key, Matrix2 *defaultValue )
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsMatrix2();
+    return defaultValue;
+}
+
+Matrix3* KeyedArchive::GetMatrix3(const String & key, Matrix3 *defaultValue )
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsMatrix3();
+    return defaultValue;
+}
+
+Matrix4* KeyedArchive::GetMatrix4(const String & key, Matrix4 *defaultValue )
+{
+    if (IsKeyExists(key))
+        return objectMap[key]->AsMatrix4();
+    return defaultValue;
+}
+    
 void KeyedArchive::DeleteKey(const String & key)
 {
 	Map<String, VariantType*>::iterator t = objectMap.find(key);
