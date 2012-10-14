@@ -829,21 +829,7 @@ void UIControl::SystemWillAppear()
 {
 	WillAppear();
 
-	auto it = childs.begin();
-	while(it != childs.end())
-	{
-		isIteratorCorrupted = false;
-		UIControl *current = *it;
-		current->Retain();
-		current->SystemWillAppear();
-		current->Release();
-		if(isIteratorCorrupted)
-		{
-			it = childs.begin();
-			continue;
-		}
-		++it;
-	}
+    EachChild([](UIControl *child){ child->SystemWillAppear(); });
 }
 
 void UIControl::SystemWillDisappear()
@@ -860,84 +846,47 @@ void UIControl::SystemWillDisappear()
         UIControlSystem::Instance()->SetFocusedControl(NULL, true);
     }
 
-	auto it = childs.begin();
-	while(it != childs.end())
-	{
-		isIteratorCorrupted = false;
-		UIControl *current = *it;
-		current->Retain();
-		current->SystemWillDisappear();
-		current->Release();
-		if(isIteratorCorrupted)
-		{
-			it = childs.begin();
-			continue;
-		}
-		++it;
-	}
+    EachChild([](UIControl *child){ child->SystemWillDisappear(); });
 }
 
 void UIControl::SystemDidAppear()
 {
 	DidAppear();
 
-	auto it = childs.begin();
-	while(it != childs.end())
-	{
-		isIteratorCorrupted = false;
-		UIControl *current = *it;
-		current->Retain();
-		current->SystemDidAppear();
-		current->Release();
-		if(isIteratorCorrupted)
-		{
-			it = childs.begin();
-			continue;
-		}
-		++it;
-	}
+    EachChild([](UIControl *child){ child->SystemDidAppear(); });
 }
 	
 void UIControl::SystemDidDisappear()
 {
 	DidDisappear();
 
-	auto it = childs.begin();
-	while(it != childs.end())
-	{
-		isIteratorCorrupted = false;
-		UIControl *current = *it;
-		current->Retain();
-		current->SystemDidDisappear();
-		current->Release();
-		if(isIteratorCorrupted)
-		{
-			it = childs.begin();
-			continue;
-		}
-		++it;
-	}
+    EachChild([](UIControl *child){ child->SystemDidDisappear(); });
 }
-    
+
 void UIControl::SystemScreenSizeDidChanged(const Rect &newFullScreenRect)
 {
 	ScreenSizeDidChanged(newFullScreenRect);
-        
-	auto it = childs.begin();
-	while(it != childs.end())
-	{
-		isIteratorCorrupted = false;
-		UIControl *current = *it;
-		current->Retain();
-		current->SystemScreenSizeDidChanged(newFullScreenRect);
-		current->Release();
-		if(isIteratorCorrupted)
-		{
-			it = childs.begin();
-			continue;
-		}
-		++it;
-	}
+    
+    EachChild([&newFullScreenRect](UIControl *child){ child->SystemScreenSizeDidChanged(newFullScreenRect); });
+}
+
+void UIControl::EachChild( std::function<void (UIControl*)> functr )
+{
+    auto it = childs.begin();
+    while(it != childs.end())
+    {
+        isIteratorCorrupted = false;
+        UIControl *current = *it;
+        current->Retain();
+        functr(current); // <-- magic is here
+        current->Release();
+        if(isIteratorCorrupted)
+        {
+            it = childs.begin();
+            continue;
+        }
+        ++it;
+    }
 }
 
 void UIControl::SystemUpdate(float32 timeElapsed)

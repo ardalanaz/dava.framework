@@ -46,6 +46,8 @@
 #include "UI/UIYamlLoader.h"
 #include "DAVAConfig.h"
 
+#include <functional> // std::function<>
+
 namespace DAVA
 {
 #define CONTROL_TOUCH_AREA		15
@@ -967,8 +969,11 @@ public:
     
     /// sets rect to match background sprite, also moves pivot point to center
     void SetSizeFromBg(bool pivotToCenter = true);
-public:
 
+protected:
+    void EachChild(std::function<void (UIControl*)> functr);
+
+public:
 	Vector2 relativePosition;//!<position in the parent control.
 	Vector2 size;//!<control size.
 
