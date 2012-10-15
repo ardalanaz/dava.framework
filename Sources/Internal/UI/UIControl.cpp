@@ -929,14 +929,8 @@ void UIControl::SystemDraw(const UIGeometricData &geometricData)
 	drawData.angle = angle;
 	drawData.AddToGeometricData(geometricData);
 		
-	if(parent)
-	{
-		GetBackground()->SetParentColor(parent->GetBackground()->GetDrawColor());
-	}
-	else 
-	{
-		GetBackground()->SetParentColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
-	}
+	GetBackground()->SetParentColor(parent ? parent->GetBackground()->GetDrawColor() 
+        : Color(1.0f, 1.0f, 1.0f, 1.0f));
 				
 	if(clipContents)
 	{//WARNING: for now clip contents don't work for rotating controls if you have any ideas you are welcome
@@ -949,7 +943,7 @@ void UIControl::SystemDraw(const UIGeometricData &geometricData)
 		Draw(drawData);
 	}
 		
-	if (debugDrawEnabled)
+	if(debugDrawEnabled)
 	{//TODO: Add debug draw for rotated controls
 		RenderManager::Instance()->SetColor(1.0f, 0.0f, 0.0f, 1.0f);
 		RenderHelper::Instance()->DrawRect(drawData.GetUnrotatedRect());
@@ -957,18 +951,17 @@ void UIControl::SystemDraw(const UIGeometricData &geometricData)
 	}
 		
 	isIteratorCorrupted = false;
-	List<UIControl*>::iterator it = childs.begin();
-    List<UIControl*>::iterator itEnd = childs.end();
-	for(; it != itEnd; ++it)
-	{
-		(*it)->SystemDraw(drawData);
-		DVASSERT(!isIteratorCorrupted);
-	}
+    for(auto &child: childs)
+    {
+        child->SystemDraw(drawData);
+        DVASSERT(!isIteratorCorrupted);
+    }
 		
 	if(visible)
 	{
 		DrawAfterChilds(drawData);
 	}
+
 	if(clipContents)
 	{
 		RenderManager::Instance()->ClipPop();
@@ -977,7 +970,7 @@ void UIControl::SystemDraw(const UIGeometricData &geometricData)
 	
 bool UIControl::IsPointInside(const Vector2 &point, bool expandWithFocus/* = false*/)
 {
-	UIGeometricData gd = GetGeometricData();
+	const UIGeometricData &gd = GetGeometricData();
 	Rect rect = gd.GetUnrotatedRect();
 	if(expandWithFocus)
 	{
@@ -986,6 +979,7 @@ bool UIControl::IsPointInside(const Vector2 &point, bool expandWithFocus/* = fal
 		rect.x -= CONTROL_TOUCH_AREA;
 		rect.y -= CONTROL_TOUCH_AREA;
 	}
+
 	if(gd.angle != 0)
 	{
 		Vector2 testPoint;
@@ -1003,13 +997,14 @@ bool UIControl::SystemProcessInput(UIEvent *currentInput)
 	{
 		return false;
 	}
-	if(UIControlSystem::Instance()->GetExclusiveInputLocker()
-		&& UIControlSystem::Instance()->GetExclusiveInputLocker() != this)
+
+    UIControl *exclusiveInputLocker = UIControlSystem::Instance()->GetExclusiveInputLocker();
+	if(exclusiveInputLocker	&& exclusiveInputLocker != this)
 	{
 		return false;
 	}
 		
-	switch (currentInput->phase) 
+	switch(currentInput->phase) 
 	{
 #if !defined(__DAVAENGINE_IPHONE__) && !defined(__DAVAENGINE_ANDROID__)                
 		case UIEvent::PHASE_KEYCHAR:
@@ -1019,7 +1014,7 @@ bool UIControl::SystemProcessInput(UIEvent *currentInput)
 			break;
 		case UIEvent::PHASE_MOVE:
 		{
-			if (!currentInput->touchLocker && IsPointInside(currentInput->point))
+			if(!currentInput->touchLocker && IsPointInside(currentInput->point))
 			{
                 UIControlSystem::Instance()->SetHoveredControl(this);
 				Input(currentInput);
@@ -1030,16 +1025,14 @@ bool UIControl::SystemProcessInput(UIEvent *currentInput)
 #endif
 		case UIEvent::PHASE_BEGAN:
 		{
-			if (!currentInput->touchLocker && IsPointInside(currentInput->point))
+			if(!currentInput->touchLocker && IsPointInside(currentInput->point))
 			{
 #ifdef ENABLE_CONTROL_EDIT
 				__touchStart = currentInput->point;
 				__oldRect = relativeRect;
-#endif
-                    
+#endif      
 				if(multiInput || !currentInputID)
 				{
-
 					controlState |= STATE_PRESSED_INSIDE;
 					controlState &= ~STATE_NORMAL;
 					++touchesInside;
@@ -1067,7 +1060,6 @@ bool UIControl::SystemProcessInput(UIEvent *currentInput)
 					currentInput->touchLocker = this;
 					return true;
 				}
-
 			}
 		}
 			break;
@@ -1082,7 +1074,7 @@ bool UIControl::SystemProcessInput(UIEvent *currentInput)
 #ifdef ENABLE_CONTROL_EDIT
 						relativePosition = __oldPosition + currentInput->point - __touchStart;
 #endif
-						if (IsPointInside(currentInput->point, true))
+						if(IsPointInside(currentInput->point, true))
 						{
 							if(currentInput->controlState == UIEvent::CONTROL_STATE_OUTSIDE)
 							{
@@ -1129,6 +1121,7 @@ bool UIControl::SystemProcessInput(UIEvent *currentInput)
 					{
 						currentInputID = 0;
 					}
+
 					if(totalTouches > 0)
 					{
 						--totalTouches;
@@ -1206,8 +1199,8 @@ bool UIControl::SystemInput(UIEvent *currentInput)
 			}
 		}
 
-		List<UIControl*>::reverse_iterator it = childs.rbegin();
-		List<UIControl*>::reverse_iterator itEnd = childs.rend();
+		auto it = childs.rbegin();
+		auto itEnd = childs.rend();
 		for(; it != itEnd; ++it)
 		{
 			(*it)->isUpdated = false;
@@ -1246,6 +1239,7 @@ void UIControl::SystemInputCancelled(UIEvent *currentInput)
 	{
 		--totalTouches;
 	}
+
 	if(currentInput->controlState == UIEvent::CONTROL_STATE_INSIDE)
 	{
 		--touchesInside;
@@ -1268,7 +1262,6 @@ void UIControl::SystemInputCancelled(UIEvent *currentInput)
 		currentInputID = 0;
 	}
 	currentInput->touchLocker = NULL;
-
 
 	InputCancelled(currentInput);
 }
@@ -1297,23 +1290,23 @@ void UIControl::DidRemoveHovered()
 
 void UIControl::Input(UIEvent *currentInput)
 {
-		
 }
+
 void UIControl::InputCancelled(UIEvent *currentInput)
 {
 }
 
 void UIControl::Update(float32 timeElapsed)
-{
-		
+{	
 }
+
 void UIControl::Draw(const UIGeometricData &geometricData)
 {
 	background->Draw(geometricData);
 }
+
 void UIControl::DrawAfterChilds(const UIGeometricData &geometricData)
-{
-		
+{		
 }
 	
 void UIControl::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
@@ -1334,7 +1327,7 @@ void UIControl::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
 	YamlNode * tagNode = node->Get("tag");
 		
 	Rect rect = GetRect();
-	if (rectNode)
+	if(rectNode)
 	{
 		rect = rectNode->AsRect();
 	}
@@ -1358,7 +1351,7 @@ void UIControl::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
 	SetRect(rect);
 		
 	int frame = 0;
-	if (frameNode)frame = frameNode->AsInt();
+	if(frameNode) frame = frameNode->AsInt();
 
 	if(spriteNode)
 	{
@@ -1366,12 +1359,12 @@ void UIControl::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
 		SafeRelease(sprite);
 	}
 		
-	int32 align = loader->GetAlignFromYamlNode(alignNode);
+	const int32 align = loader->GetAlignFromYamlNode(alignNode);
 	SetSpriteAlign(align);
     //GetBackground()->SetAlign(align);
 	
 	YamlNode * clipNode = node->Get("clip");
-	if (clipNode)
+	if(clipNode)
 	{
 		bool clipContents = loader->GetBoolFromYamlNode(clipNode, false); 
 		SetClipContents(clipContents);
@@ -1380,15 +1373,15 @@ void UIControl::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
 	YamlNode * visibleNode = node->Get("visible");
 	if(visibleNode)
 	{
-		bool visible = loader->GetBoolFromYamlNode(clipNode, false); 
+		const bool visible = loader->GetBoolFromYamlNode(clipNode, false); 
 		SetVisible(visible);
 	}
 		
-	if (pivotNode)
+	if(pivotNode)
 	{
-        if (pivotNode->GetType() == YamlNode::TYPE_STRING)
+        if(pivotNode->GetType() == YamlNode::TYPE_STRING)
         {
-            if (pivotNode->AsString() == "center")
+            if(pivotNode->AsString() == "center")
             {
                 pivotPoint.x = floor(rect.dx / 2.f);
                 pivotPoint.y = floor(rect.dy / 2.f);
@@ -1401,33 +1394,32 @@ void UIControl::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
 	}
 
     YamlNode * inputNode = node->Get("noInput");
-
-    if (inputNode)
+    if(inputNode)
     {
-        bool inputDis = loader->GetBoolFromYamlNode(inputNode, false);
+        const bool inputDis = loader->GetBoolFromYamlNode(inputNode, false);
         SetInputEnabled(!inputDis, false);
     }
 
 	if(colorInheritNode)
 	{
-		UIControlBackground::eColorInheritType type = (UIControlBackground::eColorInheritType)loader->GetColorInheritTypeFromNode(colorInheritNode);
+		const auto type = (UIControlBackground::eColorInheritType) loader->GetColorInheritTypeFromNode(colorInheritNode);
 		GetBackground()->SetColorInheritType(type);
 	}
         
     if(drawTypeNode)
 	{
-		UIControlBackground::eDrawType type = (UIControlBackground::eDrawType)loader->GetDrawTypeFromNode(drawTypeNode);
+		const auto type = (UIControlBackground::eDrawType) loader->GetDrawTypeFromNode(drawTypeNode);
 		GetBackground()->SetDrawType(type);
             
         if(leftRightStretchCapNode)
         {
-            float32 leftStretchCap = leftRightStretchCapNode->AsFloat();
+            const float32 leftStretchCap = leftRightStretchCapNode->AsFloat();
             GetBackground()->SetLeftRightStretchCap(leftStretchCap);
         }
             
         if(topBottomStretchCapNode)
         {
-            float32 topStretchCap = topBottomStretchCapNode->AsFloat();
+            const float32 topStretchCap = topBottomStretchCapNode->AsFloat();
             GetBackground()->SetTopBottomStretchCap(topStretchCap);
         }
 	}
@@ -1452,28 +1444,28 @@ Animation *	UIControl::WaitAnimation(float32 time, int32 track)
 	
 Animation *	UIControl::PositionAnimation(const Vector2 & _position, float32 time, Interpolation::FuncType interpolationFunc, int32 track)
 {
-	LinearAnimation<Vector2> * animation = new LinearAnimation<Vector2>(this, &relativePosition, _position, time, interpolationFunc);
+	auto animation = new LinearAnimation<Vector2>(this, &relativePosition, _position, time, interpolationFunc);
 	animation->Start(track);
 	return animation;
 }
 	
 Animation *	UIControl::SizeAnimation(const Vector2 & _size, float32 time, Interpolation::FuncType interpolationFunc, int32 track)
 {
-	LinearAnimation<Vector2> * animation = new LinearAnimation<Vector2>(this, &size, _size, time, interpolationFunc);
+	auto animation = new LinearAnimation<Vector2>(this, &size, _size, time, interpolationFunc);
 	animation->Start(track);
 	return animation;
 }
 	
 Animation *	UIControl::ScaleAnimation(const Vector2 & newScale, float32 time, Interpolation::FuncType interpolationFunc, int32 track)
 {
-	LinearAnimation<Vector2> * animation = new LinearAnimation<Vector2>(this, &scale, newScale, time, interpolationFunc);
+	auto animation = new LinearAnimation<Vector2>(this, &scale, newScale, time, interpolationFunc);
 	animation->Start(track);
 	return animation;
 }
 
 Animation * UIControl::AngleAnimation(float32 newAngle, float32 time, Interpolation::FuncType interpolationFunc /*= Interpolation::LINEAR*/, int32 track /*= 0*/)
 {
-	LinearAnimation<float32> * animation = new LinearAnimation<float32>(this, &angle, newAngle, time, interpolationFunc);
+	auto animation = new LinearAnimation<float32>(this, &angle, newAngle, time, interpolationFunc);
 	animation->Start(track);
 	return animation;
 }
@@ -1481,7 +1473,7 @@ Animation * UIControl::AngleAnimation(float32 newAngle, float32 time, Interpolat
 
 Animation * UIControl::MoveAnimation(const Rect & rect, float time, Interpolation::FuncType interpolationFunc, int32 track)
 {
-	TwoVector2LinearAnimation *animation = new TwoVector2LinearAnimation(this
+	auto animation = new TwoVector2LinearAnimation(this
 			, &relativePosition, Vector2(rect.x + pivotPoint.x, rect.y + pivotPoint.y)
 			, &size, Vector2(rect.dx, rect.dy), time, interpolationFunc);
 	animation->Start(track);
@@ -1490,9 +1482,8 @@ Animation * UIControl::MoveAnimation(const Rect & rect, float time, Interpolatio
 	
 Animation *	UIControl::ScaledRectAnimation(const Rect & rect, float32 time, Interpolation::FuncType interpolationFunc, int32 track)
 {
-	Vector2 finalScale(rect.dx / size.x, rect.dy / size.y);
-		
-	TwoVector2LinearAnimation *animation = new TwoVector2LinearAnimation(this
+	const Vector2 finalScale(rect.dx / size.x, rect.dy / size.y);
+	auto animation = new TwoVector2LinearAnimation(this
 			, &relativePosition, Vector2(rect.x + pivotPoint.x * finalScale.x, rect.y + pivotPoint.y * finalScale.y)
 			, &scale, finalScale, time, interpolationFunc);
 	animation->Start(track);
@@ -1501,8 +1492,8 @@ Animation *	UIControl::ScaledRectAnimation(const Rect & rect, float32 time, Inte
 	
 Animation *	UIControl::ScaledSizeAnimation(const Vector2 & newSize, float32 time, Interpolation::FuncType interpolationFunc, int32 track)
 {
-	Vector2 finalScale(newSize.x / size.x, newSize.y / size.y);
-	LinearAnimation<Vector2> * animation = new LinearAnimation<Vector2>(this, &scale, finalScale, time, interpolationFunc);
+	const Vector2 finalScale(newSize.x / size.x, newSize.y / size.y);
+	auto animation = new LinearAnimation<Vector2>(this, &scale, finalScale, time, interpolationFunc);
 	animation->Start(track);
 	return animation;
 }
@@ -1583,7 +1574,7 @@ Animation *	UIControl::RemoveControlAnimation(int32 track)
 	
 Animation *	 UIControl::ColorAnimation(const Color & finalColor, float32 time, Interpolation::FuncType interpolationFunc, int32 track)
 {
-	LinearAnimation<Color> * animation = new LinearAnimation<Color>(this, &background->color, finalColor, time, interpolationFunc);
+	auto animation = new LinearAnimation<Color>(this, &background->color, finalColor, time, interpolationFunc);
 	animation->Start(track);
 	return animation;
 }
@@ -1593,11 +1584,10 @@ void UIControl::SetDebugDraw(bool _debugDrawEnabled, bool hierarchic/* = false*/
 	debugDrawEnabled = _debugDrawEnabled;
 	if(hierarchic)
 	{	
-		List<UIControl*>::iterator it = childs.begin();
-		for(; it != childs.end(); ++it)
-		{
-			(*it)->SetDebugDraw(debugDrawEnabled, hierarchic);
-		}
+        for(auto &child: childs)
+        {
+            child->SetDebugDraw(debugDrawEnabled, hierarchic);
+        }
 	}
 }
     
@@ -1630,9 +1620,9 @@ void UIControl::SetSizeFromBg(bool pivotToCenter)
 {
     SetSize(GetBackground()->GetSprite()->GetSize());
 
-    if (pivotToCenter)
+    if(pivotToCenter)
     {
-        pivotPoint = GetSize()/2.f;
+        pivotPoint = GetSize() * 0.5f;
     }        
 }   
 }
