@@ -36,20 +36,16 @@
 
 namespace DAVA 
 {
-
-
-UI3DView::UI3DView(const Rect &rect, bool rectInAbsoluteCoordinates)
-    :   UIControl(rect, rectInAbsoluteCoordinates)
-    ,   scene(0)
+UI3DView::UI3DView(const Rect &rect, bool rectInAbsoluteCoordinates) :
+    UIControl(rect, rectInAbsoluteCoordinates)
+,   scene(nullptr)
 {
-
 }
 
 UI3DView::~UI3DView()
 {
     SafeRelease(scene);
 }
-
 
 void UI3DView::SetScene(Scene * _scene)
 {
@@ -59,7 +55,7 @@ void UI3DView::SetScene(Scene * _scene)
     
     if(scene)
     {
-        for (int32 k = 0; k < scene->GetCameraCount(); ++k)
+        for(int32 k = 0; k < scene->GetCameraCount(); ++k)
         {
             scene->GetCamera(k)->SetAspect(size.dy / size.dx);
         }
@@ -76,17 +72,14 @@ void UI3DView::AddControl(UIControl *control)
     DVASSERT(0 && "UI3DView do not support children");
 }
 
-    
 void UI3DView::Update(float32 timeElapsed)
 {
-    if (scene)
+    if(scene)
         scene->Update(timeElapsed);
 }
 
 void UI3DView::Draw(const UIGeometricData & geometricData)
 {
-
-    
     const Rect & viewportRect = geometricData.GetUnrotatedRect();
     viewportRc = viewportRect;
     
@@ -152,7 +145,7 @@ void UI3DView::SetSize(const DAVA::Vector2 &newSize)
     
     if(scene)
     {
-        for (int32 k = 0; k < scene->GetCameraCount(); ++k)
+        for(int32 k = 0; k < scene->GetCameraCount(); ++k)
         {
             scene->GetCamera(k)->SetAspect(size.dy / size.dx);
         }
