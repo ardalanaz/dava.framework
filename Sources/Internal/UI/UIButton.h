@@ -228,6 +228,9 @@ protected:
 	
 	virtual ~UIButton();
 	eButtonDrawState GetDrawStateForControlState(int32 state);
+
+    void ForEachStateCreateBackWith(int32 states, std::function<void (UIControlBackground*)> functr);
+
 private:
 
 	int32 BackgroundIndexForState(eButtonDrawState buttonState);

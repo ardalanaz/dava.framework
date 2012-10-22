@@ -52,9 +52,7 @@ namespace DAVA
 		selectedBackground = background;
 		selectedText = NULL;
 		exclusiveInput = TRUE;
-
 	}
-
 
 	UIButton::~UIButton()
 	{
@@ -75,13 +73,13 @@ namespace DAVA
 		return (UIButton *)Clone();
 	}
 
-	
 	UIControl *UIButton::Clone()
 	{
 		UIButton *b = new UIButton(GetRect());
 		b->CopyDataFrom(this);
 		return b;
 	}
+
 	void UIButton::CopyDataFrom(UIControl *srcControl)
 	{
 		background = stateBacks[DRAW_STATE_UNPRESSED];
@@ -89,6 +87,7 @@ namespace DAVA
 		for(int i = 1; i < DRAW_STATE_COUNT; i++)
 		{
 			SafeRelease(stateBacks[i]);
+
 			if(stateTexts[i])
 			{
 				RemoveControl(stateTexts[i]);
@@ -103,6 +102,7 @@ namespace DAVA
 			{
 				stateBacks[i] = srcButton->stateBacks[i]->Clone();
 			}
+
 			if(srcButton->stateTexts[i])
 			{
 				stateTexts[i] = srcButton->stateTexts[i]->CloneStaticText();
@@ -112,7 +112,6 @@ namespace DAVA
 		oldState = 0;
 		stateBacks[DRAW_STATE_UNPRESSED] = background;
 	}
-
 
 	void UIButton::SetRect(const Rect &rect, bool rectInAbsoluteCoordinates/* = FALSE*/)
 	{
@@ -128,63 +127,46 @@ namespace DAVA
 
 	void UIButton::SetStateSprite(int32 state, const String &spriteName, int32 spriteFrame/* = 0*/)
 	{
-		for(int i = 0; i < DRAW_STATE_COUNT; i++)
-		{
-			if(state & 0x01)
-			{
-				CreateBackForState((eButtonDrawState)i)->SetSprite(spriteName, spriteFrame);
-			}
-			state >>= 1;
-		}
+        ForEachStateCreateBackWith(state, 
+            [spriteName, spriteFrame](UIControlBackground *backgr){ backgr->SetSprite(spriteName, spriteFrame); });
 	}
 	
 	void UIButton::SetStateSprite(int32 state, Sprite *newSprite, int32 spriteFrame/* = 0*/)
 	{
-		for(int i = 0; i < DRAW_STATE_COUNT; i++)
-		{
-			if(state & 0x01)
-			{
-				CreateBackForState((eButtonDrawState)i)->SetSprite(newSprite, spriteFrame);
-			}
-			state >>= 1;
-		}
+        ForEachStateCreateBackWith(state, 
+            [newSprite, spriteFrame](UIControlBackground *backgr){ backgr->SetSprite(newSprite, spriteFrame); });
 	}
 	
 	void UIButton::SetStateFrame(int32 state, int32 spriteFrame)
 	{
-		for(int i = 0; i < DRAW_STATE_COUNT; i++)
-		{
-			if(state & 0x01)
-			{
-				CreateBackForState((eButtonDrawState)i)->SetFrame(spriteFrame);
-			}
-			state >>= 1;
-		}
+        ForEachStateCreateBackWith(state, 
+            [spriteFrame](UIControlBackground *backgr){ backgr->SetFrame(spriteFrame); });
 	}
 	
 	void UIButton::SetStateDrawType(int32 state, UIControlBackground::eDrawType drawType)
 	{
-		for(int i = 0; i < DRAW_STATE_COUNT; i++)
-		{
-			if(state & 0x01)
-			{
-				CreateBackForState((eButtonDrawState)i)->SetDrawType(drawType);
-			}
-			state >>= 1;
-		}
+        ForEachStateCreateBackWith(state, 
+            [drawType](UIControlBackground *backgr){ backgr->SetDrawType(drawType); });
 	}
 	
 	void UIButton::SetStateAlign(int32 state, int32 align)
 	{
-		for(int i = 0; i < DRAW_STATE_COUNT; i++)
-		{
-			if(state & 0x01)
-			{
-				CreateBackForState((eButtonDrawState)i)->SetAlign(align);
-			}
-			state >>= 1;
-		}
+        ForEachStateCreateBackWith(state, 
+            [align](UIControlBackground *backgr){ backgr->SetAlign(align); });
 	}
+
+    void UIButton::ForEachStateCreateBackWith(int32 states, std::function<void (UIControlBackground*)> functr)
+    {
+        for(int i = 0; i < DRAW_STATE_COUNT; ++i)
+        {
+            if(states & 0x01)
+            {
+                functr(CreateBackForState(eButtonDrawState(i)));
+            }
+            states >>= 1;
+        }
+    }
+
 	Sprite* UIButton::GetStateSprite(int32 state)
 	{
 		return GetActualBackground(state)->GetSprite();
