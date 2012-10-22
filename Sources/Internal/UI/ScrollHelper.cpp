@@ -33,185 +33,187 @@
 
 namespace DAVA 
 {
-	ScrollHelper::ScrollHelper()
-	:	position(0)
-	,	elementSize(0)
-	,	totalDeltaTime(0)
-	,	totalDeltaMove(0)
-	,   speed(0)
-	{
-		slowDown = 0.25f;
-		backward = 0.3f;
-	}
+ScrollHelper::ScrollHelper()
+:	position(0)
+,	elementSize(0)
+,	totalDeltaTime(0)
+,	totalDeltaMove(0)
+,   speed(0)
+,   viewSize(0)
+,   virtualViewSize(0)
+{
+	slowDown = 0.25f;
+	backward = 0.3f;
+}
 
-	void ScrollHelper::SetPosition(float32 pos)
-	{
-		position = pos; // ?? Clamp(pos, -elementSize, 0.f);
-        position = Min(position, 0.f);
-        position = Max(position, -elementSize);
-	}
+void ScrollHelper::SetPosition(float32 pos)
+{
+	position = pos; // ?? Clamp(pos, -elementSize, 0.f);
+    position = Min(position, 0.f);
+    position = Max(position, -elementSize);
+}
 
-	void ScrollHelper::SetElementSize(float32 newSize)
-	{
-		elementSize = newSize;
-		virtualViewSize = Min(viewSize, elementSize);
-	}
+void ScrollHelper::SetElementSize(float32 newSize)
+{
+	elementSize = newSize;
+	virtualViewSize = Min(viewSize, elementSize);
+}
 	
-	float ScrollHelper::GetPosition()
-	{
-		return position;
-	}
+float ScrollHelper::GetPosition()
+{
+	return position;
+}
 	
-	void ScrollHelper::SetViewSize(float32 size)
-	{
-		viewSize = size;
-		virtualViewSize = Min(viewSize, elementSize);
-	}
+void ScrollHelper::SetViewSize(float32 size)
+{
+	viewSize = size;
+	virtualViewSize = Min(viewSize, elementSize);
+}
     
-    float32 ScrollHelper::GetViewSize()
-    {
-        return viewSize;
-    }
+float32 ScrollHelper::GetViewSize()
+{
+    return viewSize;
+}
     
-    float32 ScrollHelper::GetElementSize()
-    {
-        return elementSize;
-    }
+float32 ScrollHelper::GetElementSize()
+{
+    return elementSize;
+}
 
-	void ScrollHelper::SetSlowDownTime(float newValue)
-	{
-		slowDown = newValue;
-	}
+void ScrollHelper::SetSlowDownTime(float newValue)
+{
+	slowDown = newValue;
+}
 	
-	void ScrollHelper::SetBorderMoveModifer(float newValue)
+void ScrollHelper::SetBorderMoveModifer(float newValue)
+{
+	backward = newValue;
+}
+
+void ScrollHelper::Impulse(float impulseSpeed)
+{
+	if((position > 0 && impulseSpeed > 0) || (position + elementSize < virtualViewSize && impulseSpeed < 0))
 	{
-		backward = newValue;
+		return;
 	}
+	speed = impulseSpeed;
+}
 
-	void ScrollHelper::Impulse(float impulseSpeed)
+float ScrollHelper::GetPosition(float positionDelta, float timeDelta, bool isPositionLocked)
+{
+	if(isPositionLocked)
 	{
-		if((position > 0 && impulseSpeed > 0) || (position + elementSize < virtualViewSize && impulseSpeed < 0))
+		if(position + positionDelta > 0)
 		{
-			return;
+			positionDelta *= (1.0f - position / virtualViewSize) * backward;
 		}
-		speed = impulseSpeed;
+
+		if(position + elementSize + positionDelta  < virtualViewSize)
+		{
+			positionDelta *= (1.0f - (virtualViewSize - (position + elementSize)) / virtualViewSize) * backward;
+		}
+		position += positionDelta;
+		speed = 0;
+
+		MovesDelta m;
+		m.deltaMove = positionDelta;
+		m.deltaTime = timeDelta;
+		moves.push_back(m);
+
+        totalDeltaMove += positionDelta;
+		totalDeltaTime += timeDelta;
+		if(totalDeltaTime >= 0.4f)
+		{
+			const auto it = moves.begin();
+			totalDeltaTime -= it->deltaTime;
+			totalDeltaMove -= it->deltaMove;
+			moves.erase(it);
+		}
 	}
-
-	float ScrollHelper::GetPosition(float positionDelta, float timeDelta, bool isPositionLocked)
+	else
 	{
-		if(isPositionLocked)
+		if(totalDeltaMove != 0)
 		{
-			if(position + positionDelta > 0)
-			{
-				positionDelta *= (1.0f - position / virtualViewSize) * backward;
-			}
-
-			if(position + elementSize + positionDelta  < virtualViewSize)
-			{
-				positionDelta *= (1.0f - (virtualViewSize - (position + elementSize)) / virtualViewSize) * backward;
-			}
-			position += positionDelta;
-			speed = 0;
-
-			MovesDelta m;
-			m.deltaMove = positionDelta;
-			m.deltaTime = timeDelta;
-			moves.push_back(m);
-
-            totalDeltaMove += positionDelta;
-			totalDeltaTime += timeDelta;
-			if(totalDeltaTime >= 0.4f)
-			{
-				const auto it = moves.begin();
-				totalDeltaTime -= it->deltaTime;
-				totalDeltaMove -= it->deltaMove;
-				moves.erase(it);
-			}
+			speed = totalDeltaMove / totalDeltaTime;
+			speed = Min(speed,  virtualViewSize * 2);
+			speed = Max(speed, -virtualViewSize * 2);
 		}
-		else
-		{
-			if(totalDeltaMove != 0)
-			{
-				speed = totalDeltaMove / totalDeltaTime;
-				speed = Min(speed,  virtualViewSize * 2);
-				speed = Max(speed, -virtualViewSize * 2);
-			}
 			
-			if(position > 0)
+		if(position > 0)
+		{
+			if(backward != 0 && slowDown != 0)
 			{
-				if(backward != 0 && slowDown != 0)
+				if(slowDown != 0)
 				{
-					if(slowDown != 0)
-					{
-						speed -= virtualViewSize * timeDelta / slowDown / backward;
-					}
-					else // 'if' one level up will prevent this forever
-					{
-						speed -= virtualViewSize * timeDelta * 4 / backward;
-					}
-					position += speed * timeDelta;
-					if(position < 0)
-					{
-						position = 0;
-						speed = 0;
-					}
+					speed -= virtualViewSize * timeDelta / slowDown / backward;
 				}
-				else
+				else // 'if' one level up will prevent this forever
+				{
+					speed -= virtualViewSize * timeDelta * 4 / backward;
+				}
+				position += speed * timeDelta;
+				if(position < 0)
 				{
 					position = 0;
 					speed = 0;
 				}
 			}
-			else if(position + elementSize < virtualViewSize)
+			else
 			{
-				if(backward != 0)
+				position = 0;
+				speed = 0;
+			}
+		}
+		else if(position + elementSize < virtualViewSize)
+		{
+			if(backward != 0)
+			{
+				if(slowDown != 0)
 				{
-					if(slowDown != 0)
-					{
-						speed += virtualViewSize * timeDelta / slowDown / backward;
-					}
-					else
-					{
-						speed += virtualViewSize * timeDelta * 4 / backward;
-					}
-
-					position += speed * timeDelta;
-					if(position + elementSize > virtualViewSize)
-					{
-						position = virtualViewSize - elementSize;
-						speed = 0;
-					}
+					speed += virtualViewSize * timeDelta / slowDown / backward;
 				}
 				else
+				{
+					speed += virtualViewSize * timeDelta * 4 / backward;
+				}
+
+				position += speed * timeDelta;
+				if(position + elementSize > virtualViewSize)
 				{
 					position = virtualViewSize - elementSize;
 					speed = 0;
 				}
 			}
-			else if(speed != 0)
+			else
 			{
-				if(slowDown != 0)
-				{
-					float oldSpd = speed;
-					speed = speed - speed / slowDown * timeDelta;
-					if((oldSpd > 0 && speed <  1.0) 
-                    || (oldSpd < 0 && speed > -1.0))
-					{
-						speed = 0;
-					}
-					position += speed * timeDelta;
-				}
-				else
+				position = virtualViewSize - elementSize;
+				speed = 0;
+			}
+		}
+		else if(speed != 0)
+		{
+			if(slowDown != 0)
+			{
+				float oldSpd = speed;
+				speed = speed - speed / slowDown * timeDelta;
+				if((oldSpd > 0 && speed <  1.0) 
+                || (oldSpd < 0 && speed > -1.0))
 				{
 					speed = 0;
 				}
+				position += speed * timeDelta;
 			}
-			
-			moves.clear();
-			totalDeltaTime = 0;
-			totalDeltaMove = 0;
+			else
+			{
+				speed = 0;
+			}
 		}
-		
-		return position;
+			
+		moves.clear();
+		totalDeltaTime = 0;
+		totalDeltaMove = 0;
 	}
+		
+	return position;
+}
 }
