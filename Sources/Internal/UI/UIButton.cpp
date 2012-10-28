@@ -36,219 +36,219 @@
 
 namespace DAVA 
 {
-	REGISTER_CLASS(UIButton);
+REGISTER_CLASS(UIButton);
 
-	UIButton::UIButton(const Rect &rect, bool rectInAbsoluteCoordinates/* = FALSE*/)
-	: UIControl(rect, rectInAbsoluteCoordinates)
+UIButton::UIButton(const Rect &rect, bool rectInAbsoluteCoordinates/* = FALSE*/)
+: UIControl(rect, rectInAbsoluteCoordinates)
+{
+	inputEnabled = TRUE;
+	oldState = 0;
+	for(int i = 0; i < DRAW_STATE_COUNT; i++)
 	{
-		inputEnabled = TRUE;
-		oldState = 0;
-		for(int i = 0; i < DRAW_STATE_COUNT; i++)
-		{
-			stateBacks[i] = NULL;
-			stateTexts[i] = NULL;
-		}
-		stateBacks[DRAW_STATE_UNPRESSED] = background;
-		selectedBackground = background;
-		selectedText = NULL;
-		exclusiveInput = TRUE;
+		stateBacks[i] = NULL;
+		stateTexts[i] = NULL;
 	}
+	stateBacks[DRAW_STATE_UNPRESSED] = background;
+	selectedBackground = background;
+	selectedText = NULL;
+	exclusiveInput = TRUE;
+}
 
-	UIButton::~UIButton()
+UIButton::~UIButton()
+{
+	background = stateBacks[DRAW_STATE_UNPRESSED];
+	for(int i = 0; i < DRAW_STATE_COUNT; i++)
 	{
-		background = stateBacks[DRAW_STATE_UNPRESSED];
-		for(int i = 0; i < DRAW_STATE_COUNT; i++)
+		SafeRelease(stateTexts[i]);
+	}
+	for(int i = 1; i < DRAW_STATE_COUNT; i++)
+	{
+		SafeRelease(stateBacks[i]);
+	}
+	SafeRelease(selectedText);
+}
+	
+UIButton *UIButton::CloneButton()
+{
+	return (UIButton *)Clone();
+}
+
+UIControl *UIButton::Clone()
+{
+	UIButton *b = new UIButton(GetRect());
+	b->CopyDataFrom(this);
+	return b;
+}
+
+void UIButton::CopyDataFrom(UIControl *srcControl)
+{
+	background = stateBacks[DRAW_STATE_UNPRESSED];
+	SafeRelease(selectedText);
+	for(int i = 1; i < DRAW_STATE_COUNT; i++)
+	{
+		SafeRelease(stateBacks[i]);
+
+		if(stateTexts[i])
 		{
+			RemoveControl(stateTexts[i]);
 			SafeRelease(stateTexts[i]);
 		}
-		for(int i = 1; i < DRAW_STATE_COUNT; i++)
+	}
+	UIControl::CopyDataFrom(srcControl);
+	UIButton *srcButton = (UIButton *)srcControl;
+	for(int i = 1; i < DRAW_STATE_COUNT; i++)
+	{
+		if(srcButton->stateBacks[i])
 		{
-			SafeRelease(stateBacks[i]);
+			stateBacks[i] = srcButton->stateBacks[i]->Clone();
 		}
-		SafeRelease(selectedText);
-	}
-	
-	UIButton *UIButton::CloneButton()
-	{
-		return (UIButton *)Clone();
-	}
 
-	UIControl *UIButton::Clone()
-	{
-		UIButton *b = new UIButton(GetRect());
-		b->CopyDataFrom(this);
-		return b;
-	}
-
-	void UIButton::CopyDataFrom(UIControl *srcControl)
-	{
-		background = stateBacks[DRAW_STATE_UNPRESSED];
-		SafeRelease(selectedText);
-		for(int i = 1; i < DRAW_STATE_COUNT; i++)
+		if(srcButton->stateTexts[i])
 		{
-			SafeRelease(stateBacks[i]);
-
-			if(stateTexts[i])
-			{
-				RemoveControl(stateTexts[i]);
-				SafeRelease(stateTexts[i]);
-			}
-		}
-		UIControl::CopyDataFrom(srcControl);
-		UIButton *srcButton = (UIButton *)srcControl;
-		for(int i = 1; i < DRAW_STATE_COUNT; i++)
-		{
-			if(srcButton->stateBacks[i])
-			{
-				stateBacks[i] = srcButton->stateBacks[i]->Clone();
-			}
-
-			if(srcButton->stateTexts[i])
-			{
-				stateTexts[i] = srcButton->stateTexts[i]->CloneStaticText();
-			}
-		}
-		selectedBackground = background;
-		oldState = 0;
-		stateBacks[DRAW_STATE_UNPRESSED] = background;
-	}
-
-	void UIButton::SetRect(const Rect &rect, bool rectInAbsoluteCoordinates/* = FALSE*/)
-	{
-		UIControl::SetRect(rect, rectInAbsoluteCoordinates);
-		for(int i = 1; i < DRAW_STATE_COUNT; i++)
-		{
-			if(stateTexts[i])
-			{
-				stateTexts[i]->SetRect(Rect(0, 0, rect.dx, rect.dy));
-			}
+			stateTexts[i] = srcButton->stateTexts[i]->CloneStaticText();
 		}
 	}
+	selectedBackground = background;
+	oldState = 0;
+	stateBacks[DRAW_STATE_UNPRESSED] = background;
+}
+
+void UIButton::SetRect(const Rect &rect, bool rectInAbsoluteCoordinates/* = FALSE*/)
+{
+	UIControl::SetRect(rect, rectInAbsoluteCoordinates);
+	for(int i = 1; i < DRAW_STATE_COUNT; i++)
+	{
+		if(stateTexts[i])
+		{
+			stateTexts[i]->SetRect(Rect(0, 0, rect.dx, rect.dy));
+		}
+	}
+}
 
 
-    void UIButton::ForEachEnabledState(int32 states, std::function<void (int32)> functr)
+void UIButton::ForEachEnabledState(int32 states, std::function<void (int32)> functr)
+{
+    for(int32 i = 0; (i < DRAW_STATE_COUNT) && (states != 0); ++i)
     {
-        for(int32 i = 0; (i < DRAW_STATE_COUNT) && (states != 0); ++i)
+        if(states & 0x01)
         {
-            if(states & 0x01)
-            {
-                functr(i);
-            }
-            states >>= 1;
+            functr(i);
         }
+        states >>= 1;
     }
+}
 
-	void UIButton::SetStateSprite(int32 state, const String &spriteName, int32 spriteFrame/* = 0*/)
-	{
-        ForEachEnabledState(state, 
-            [this, spriteName, spriteFrame](int32 i)
-            { 
-                CreateBackForState(eButtonDrawState(i))->SetSprite(spriteName, spriteFrame); 
-            });
-	}
+void UIButton::SetStateSprite(int32 state, const String &spriteName, int32 spriteFrame/* = 0*/)
+{
+    ForEachEnabledState(state, 
+        [this, spriteName, spriteFrame](int32 i)
+        { 
+            CreateBackForState(eButtonDrawState(i))->SetSprite(spriteName, spriteFrame); 
+        });
+}
 	
-	void UIButton::SetStateSprite(int32 state, Sprite *newSprite, int32 spriteFrame/* = 0*/)
-	{
-        ForEachEnabledState(state, 
-            [this, newSprite, spriteFrame](int32 i)
-            { 
-                CreateBackForState(eButtonDrawState(i))->SetSprite(newSprite, spriteFrame); 
-            });
-	}
+void UIButton::SetStateSprite(int32 state, Sprite *newSprite, int32 spriteFrame/* = 0*/)
+{
+    ForEachEnabledState(state, 
+        [this, newSprite, spriteFrame](int32 i)
+        { 
+            CreateBackForState(eButtonDrawState(i))->SetSprite(newSprite, spriteFrame); 
+        });
+}
 	
-	void UIButton::SetStateFrame(int32 state, int32 spriteFrame)
-	{
-        ForEachEnabledState(state, 
-            [this, spriteFrame](int32 i)
-            { 
-                CreateBackForState(eButtonDrawState(i))->SetFrame(spriteFrame); 
-            });
-	}
+void UIButton::SetStateFrame(int32 state, int32 spriteFrame)
+{
+    ForEachEnabledState(state, 
+        [this, spriteFrame](int32 i)
+        { 
+            CreateBackForState(eButtonDrawState(i))->SetFrame(spriteFrame); 
+        });
+}
 	
-	void UIButton::SetStateDrawType(int32 state, UIControlBackground::eDrawType drawType)
-	{
-        ForEachEnabledState(state, 
-            [this, drawType](int32 i)
-            { 
-                CreateBackForState(eButtonDrawState(i))->SetDrawType(drawType); 
-            });
-	}
+void UIButton::SetStateDrawType(int32 state, UIControlBackground::eDrawType drawType)
+{
+    ForEachEnabledState(state, 
+        [this, drawType](int32 i)
+        { 
+            CreateBackForState(eButtonDrawState(i))->SetDrawType(drawType); 
+        });
+}
 	
-	void UIButton::SetStateAlign(int32 state, int32 align)
-	{
-        ForEachEnabledState(state, 
-            [this, align](int32 i)
-            { 
-                CreateBackForState(eButtonDrawState(i))->SetAlign(align); 
-            });
-	}
+void UIButton::SetStateAlign(int32 state, int32 align)
+{
+    ForEachEnabledState(state, 
+        [this, align](int32 i)
+        { 
+            CreateBackForState(eButtonDrawState(i))->SetAlign(align); 
+        });
+}
 
-	Sprite* UIButton::GetStateSprite(int32 state)
-	{
-		return GetActualBackground(state)->GetSprite();
-	}
-	int32 UIButton::GetStateFrame(int32 state)
-	{
-		return GetActualBackground(state)->GetFrame();
-	}
-	UIControlBackground::eDrawType UIButton::GetStateDrawType(int32 state)
-	{
-		return GetActualBackground(state)->GetDrawType();
-	}
-	int32 UIButton::GetStateAlign(int32 state)
-	{
-		return GetActualBackground(state)->GetAlign();
-	}
+Sprite* UIButton::GetStateSprite(int32 state)
+{
+	return GetActualBackground(state)->GetSprite();
+}
+int32 UIButton::GetStateFrame(int32 state)
+{
+	return GetActualBackground(state)->GetFrame();
+}
+UIControlBackground::eDrawType UIButton::GetStateDrawType(int32 state)
+{
+	return GetActualBackground(state)->GetDrawType();
+}
+int32 UIButton::GetStateAlign(int32 state)
+{
+	return GetActualBackground(state)->GetAlign();
+}
 	
-	UIControlBackground *UIButton::GetStateBackground(int32 state)
-	{
-		return GetActualBackground(state);
-	}
+UIControlBackground *UIButton::GetStateBackground(int32 state)
+{
+	return GetActualBackground(state);
+}
 	
 	
-	void UIButton::SetStateBackground(int32 state, UIControlBackground *newBackground)
-	{
-        ForEachEnabledState(state, 
-            [this, newBackground](int32 i)
-            { 				
-                SafeRelease(stateBacks[i]);
-                stateBacks[i] = newBackground->Clone(); 
-            });
-		oldState = 0;
-	}
+void UIButton::SetStateBackground(int32 state, UIControlBackground *newBackground)
+{
+    ForEachEnabledState(state, 
+        [this, newBackground](int32 i)
+        { 				
+            SafeRelease(stateBacks[i]);
+            stateBacks[i] = newBackground->Clone(); 
+        });
+	oldState = 0;
+}
 	
-	void UIButton::SetStateFont(int32 state, Font *font)
-	{
-        ForEachEnabledState(state, 
-            [this, font](int32 i) 
-            { 
-                CreateTextForState(eButtonDrawState(i))->SetFont(font); 
-            });
-	}
+void UIButton::SetStateFont(int32 state, Font *font)
+{
+    ForEachEnabledState(state, 
+        [this, font](int32 i) 
+        { 
+            CreateTextForState(eButtonDrawState(i))->SetFont(font); 
+        });
+}
 	
-	void UIButton::SetStateText(int32 state, const WideString &text, const Vector2 &requestedTextRectSize/* = Vector2(0,0)*/)
-	{
-        ForEachEnabledState(state, 
-            [this, text, requestedTextRectSize](int32 i) 
+void UIButton::SetStateText(int32 state, const WideString &text, const Vector2 &requestedTextRectSize/* = Vector2(0,0)*/)
+{
+    ForEachEnabledState(state, 
+        [this, text, requestedTextRectSize](int32 i) 
+        {
+            CreateTextForState(eButtonDrawState(i))->SetText(text, requestedTextRectSize); 
+        });
+}
+	
+void UIButton::SetStateTextControl(int32 state, UIStaticText *textControl)
+{
+    ForEachEnabledState(state, 
+        [this, textControl](int32 i)
+        { 				
+            if(stateTexts[i])
             {
-                CreateTextForState(eButtonDrawState(i))->SetText(text, requestedTextRectSize); 
-            });
-	}
-	
-	void UIButton::SetStateTextControl(int32 state, UIStaticText *textControl)
-	{
-        ForEachEnabledState(state, 
-            [this, textControl](int32 i)
-            { 				
-                if(stateTexts[i])
-                {
-                    RemoveControl(stateTexts[i]);
-                    SafeRelease(stateTexts[i]);
-                }
-                stateTexts[i] = textControl->CloneStaticText();
-            });
-		oldState = 0;
-	}
+                RemoveControl(stateTexts[i]);
+                SafeRelease(stateTexts[i]);
+            }
+            stateTexts[i] = textControl->CloneStaticText();
+        });
+	oldState = 0;
+}
 	
 //	FTFont *UIButton::GetStateFont(int32 state)
 //	{
@@ -265,376 +265,376 @@ namespace DAVA
 //		
 //	}
 	
-	UIStaticText *UIButton::GetStateTextControl(int32 state)
-	{
-		return GetActualText(state);
-	}
+UIStaticText *UIButton::GetStateTextControl(int32 state)
+{
+	return GetActualText(state);
+}
 
 	
-	void UIButton::SystemUpdate(float32 timeElapsed)
-	{
-		UIControl::SystemUpdate(timeElapsed);
+void UIButton::SystemUpdate(float32 timeElapsed)
+{
+	UIControl::SystemUpdate(timeElapsed);
 
-		if(oldState != controlState)
+	if(oldState != controlState)
+	{
+        // MakeWithoutSelectedText() here?
+		if(selectedText)
 		{
-            // MakeWithoutSelectedText() here?
-			if(selectedText)
-			{
-				RemoveControl(selectedText);
-				SafeRelease(selectedText);
-			}
-			selectedText = SafeRetain(GetActualText(controlState));
-			if(selectedText)
-			{
-				AddControl(selectedText);
-                BringChildBack(selectedText);
-			}
-			
-			selectedBackground = GetActualBackground(controlState);
-			
-			oldState = controlState;
+			RemoveControl(selectedText);
+			SafeRelease(selectedText);
 		}
-	}
-	
-    void UIButton::MakeWithoutSelectedText(std::function<void (void)> functr)
-    {
-        if(selectedText)
-        {
-            RemoveControl(selectedText);
-        }
-
-        functr();
-
-        if(selectedText)
-        {
-            AddControl(selectedText);
+		selectedText = SafeRetain(GetActualText(controlState));
+		if(selectedText)
+		{
+			AddControl(selectedText);
             BringChildBack(selectedText);
-        }
-    }
-
-	void UIButton::SetVisible(bool isVisible, bool hierarchic)
-	{
-        MakeWithoutSelectedText(
-            [this, isVisible, hierarchic]() 
-            {
-                UIControl::SetVisible(isVisible, hierarchic);
-                for(int i = 0; i < DRAW_STATE_COUNT; i++)
-                {
-                    if(stateTexts[i])
-                    {
-                        stateTexts[i]->SetVisible(isVisible);
-                    }
-                } 
-            });
-	}
-	
-	void UIButton::SetInputEnabled(bool isEnabled, bool hierarchic)
-	{
-        MakeWithoutSelectedText(
-            [this, isEnabled, hierarchic]() 
-            {
-		        UIControl::SetInputEnabled(isEnabled, hierarchic);
-            });
-	}
-
-	void UIButton::SetDisabled(bool isDisabled, bool hierarchic)
-	{
-        MakeWithoutSelectedText(
-            [this, isDisabled, hierarchic]() 
-            {
-                	UIControl::SetDisabled(isDisabled, hierarchic);
-            });
-	}
-	
-	void UIButton::SetSelected(bool isSelected, bool hierarchic)
-	{
-        MakeWithoutSelectedText(
-            [this, isSelected, hierarchic]()
-            {
-		        UIControl::SetSelected(isSelected, hierarchic);
-            });
-	}
-	
-	void UIButton::SetExclusiveInput(bool isExclusiveInput, bool hierarchic)
-	{
-        MakeWithoutSelectedText(
-            [this, isExclusiveInput, hierarchic]()
-            {
-		        UIControl::SetExclusiveInput(isExclusiveInput, hierarchic);
-            });
-	}
-	
-	void UIButton::SetMultiInput(bool isMultiInput, bool hierarchic)
-	{
-        MakeWithoutSelectedText(
-            [this, isMultiInput, hierarchic]()
-            {
-		        UIControl::SetMultiInput(isMultiInput, hierarchic);
-            });
-	}
-	
-    void UIButton::SystemDraw(const UIGeometricData &geometricData)
-    {
-        background = selectedBackground;
-        UIControl::SystemDraw(geometricData);
-        background = stateBacks[DRAW_STATE_UNPRESSED];
-    }
-
-	void UIButton::SetBackground(UIControlBackground *newBg)
-	{
-		DVASSERT(false);
-	}
-	
-	UIControlBackground * UIButton::GetBackground()
-	{
-		return selectedBackground;
-	}
-	
-	UIControlBackground *UIButton::GetActualBackground(int32 state)
-	{
-		return stateBacks[BackgroundIndexForState(GetDrawStateForControlState(state))];
-	}
-
-	UIStaticText *UIButton::GetActualText(int32 state)
-	{
-		return stateTexts[TextIndexForState(GetDrawStateForControlState(state))];
-	}
-
-
-	UIControlBackground *UIButton::CreateBackForState(eButtonDrawState buttonState)
-	{
-		if(stateBacks[buttonState])
-		{
-			return stateBacks[buttonState];
 		}
-		
-		stateBacks[buttonState] = new UIControlBackground();
+			
+		selectedBackground = GetActualBackground(controlState);
+			
+		oldState = controlState;
+	}
+}
+	
+void UIButton::MakeWithoutSelectedText(std::function<void (void)> functr)
+{
+    if(selectedText)
+    {
+        RemoveControl(selectedText);
+    }
+
+    functr();
+
+    if(selectedText)
+    {
+        AddControl(selectedText);
+        BringChildBack(selectedText);
+    }
+}
+
+void UIButton::SetVisible(bool isVisible, bool hierarchic)
+{
+    MakeWithoutSelectedText(
+        [this, isVisible, hierarchic]() 
+        {
+            UIControl::SetVisible(isVisible, hierarchic);
+            for(int i = 0; i < DRAW_STATE_COUNT; i++)
+            {
+                if(stateTexts[i])
+                {
+                    stateTexts[i]->SetVisible(isVisible);
+                }
+            } 
+        });
+}
+	
+void UIButton::SetInputEnabled(bool isEnabled, bool hierarchic)
+{
+    MakeWithoutSelectedText(
+        [this, isEnabled, hierarchic]() 
+        {
+		    UIControl::SetInputEnabled(isEnabled, hierarchic);
+        });
+}
+
+void UIButton::SetDisabled(bool isDisabled, bool hierarchic)
+{
+    MakeWithoutSelectedText(
+        [this, isDisabled, hierarchic]() 
+        {
+                UIControl::SetDisabled(isDisabled, hierarchic);
+        });
+}
+	
+void UIButton::SetSelected(bool isSelected, bool hierarchic)
+{
+    MakeWithoutSelectedText(
+        [this, isSelected, hierarchic]()
+        {
+		    UIControl::SetSelected(isSelected, hierarchic);
+        });
+}
+	
+void UIButton::SetExclusiveInput(bool isExclusiveInput, bool hierarchic)
+{
+    MakeWithoutSelectedText(
+        [this, isExclusiveInput, hierarchic]()
+        {
+		    UIControl::SetExclusiveInput(isExclusiveInput, hierarchic);
+        });
+}
+	
+void UIButton::SetMultiInput(bool isMultiInput, bool hierarchic)
+{
+    MakeWithoutSelectedText(
+        [this, isMultiInput, hierarchic]()
+        {
+		    UIControl::SetMultiInput(isMultiInput, hierarchic);
+        });
+}
+	
+void UIButton::SystemDraw(const UIGeometricData &geometricData)
+{
+    background = selectedBackground;
+    UIControl::SystemDraw(geometricData);
+    background = stateBacks[DRAW_STATE_UNPRESSED];
+}
+
+void UIButton::SetBackground(UIControlBackground *newBg)
+{
+	DVASSERT(false);
+}
+	
+UIControlBackground * UIButton::GetBackground()
+{
+	return selectedBackground;
+}
+	
+UIControlBackground *UIButton::GetActualBackground(int32 state)
+{
+	return stateBacks[BackgroundIndexForState(GetDrawStateForControlState(state))];
+}
+
+UIStaticText *UIButton::GetActualText(int32 state)
+{
+	return stateTexts[TextIndexForState(GetDrawStateForControlState(state))];
+}
+
+
+UIControlBackground *UIButton::CreateBackForState(eButtonDrawState buttonState)
+{
+	if(stateBacks[buttonState])
+	{
 		return stateBacks[buttonState];
 	}
-	
-	UIStaticText *UIButton::CreateTextForState(eButtonDrawState buttonState)
-	{
-		if(stateTexts[buttonState])
-		{
-			return stateTexts[buttonState];
-		}
 		
-		stateTexts[buttonState] = new UIStaticText(Rect(0, 0, size.x, size.y));
-		if(!GetVisible())
-		{
-			stateTexts[buttonState]->SetVisible(false, false);
-		}
+	stateBacks[buttonState] = new UIControlBackground();
+	return stateBacks[buttonState];
+}
+	
+UIStaticText *UIButton::CreateTextForState(eButtonDrawState buttonState)
+{
+	if(stateTexts[buttonState])
+	{
 		return stateTexts[buttonState];
 	}
-
-
-	UIButton::eButtonDrawState UIButton::GetDrawStateForControlState(int32 state)
-	{
-		if(state & UIControl::STATE_DISABLED)
-		{
-			return DRAW_STATE_DISABLED;
-		}
-		else if(state & UIControl::STATE_SELECTED)
-		{
-			return DRAW_STATE_SELECTED;
-		}
-		else if(state & UIControl::STATE_PRESSED_INSIDE)
-		{
-			return DRAW_STATE_PRESSED_INSIDE;
-		}
-		else if(state & UIControl::STATE_PRESSED_OUTSIDE)
-		{
-			return DRAW_STATE_PRESSED_OUTSIDE;
-		}
-		else if(state & UIControl::STATE_HOVER)
-		{
-			return DRAW_STATE_HOVERED;
-		}
 		
-		return DRAW_STATE_UNPRESSED;
-	}
-
-	int32 UIButton::BackgroundIndexForState(eButtonDrawState buttonState)
+	stateTexts[buttonState] = new UIStaticText(Rect(0, 0, size.x, size.y));
+	if(!GetVisible())
 	{
-		if(stateBacks[buttonState])
-		{//return current state if dada for state is present
-			return buttonState;
-		}
-		switch (buttonState) 
-		{//find other state if data for the requested state is absent
-			case DRAW_STATE_PRESSED_INSIDE:
-			{
-				if(stateBacks[DRAW_STATE_PRESSED_OUTSIDE])
-				{
-					return DRAW_STATE_PRESSED_OUTSIDE;
-				}
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_PRESSED_OUTSIDE:
-			{
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_SELECTED:
-			{
-				if(stateBacks[DRAW_STATE_PRESSED_INSIDE])
-				{
-					return DRAW_STATE_PRESSED_INSIDE;
-				}
-				if(stateBacks[DRAW_STATE_PRESSED_OUTSIDE])
-				{
-					return DRAW_STATE_PRESSED_OUTSIDE;
-				}
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_DISABLED:
-			{
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_HOVERED:
-			{
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-            default:
-                break;
-		}
-		return DRAW_STATE_UNPRESSED;
+		stateTexts[buttonState]->SetVisible(false, false);
 	}
+	return stateTexts[buttonState];
+}
 
-	int32 UIButton::TextIndexForState(eButtonDrawState buttonState)
+
+UIButton::eButtonDrawState UIButton::GetDrawStateForControlState(int32 state)
+{
+	if(state & UIControl::STATE_DISABLED)
 	{
-		if(stateTexts[buttonState])
-		{
-			return buttonState;
-		}
-
-		switch (buttonState) 
-		{//find other state if data for the requested state is absent
-			case DRAW_STATE_PRESSED_INSIDE:
-			{
-				if(stateTexts[DRAW_STATE_PRESSED_OUTSIDE])
-				{
-					return DRAW_STATE_PRESSED_OUTSIDE;
-				}
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_PRESSED_OUTSIDE:
-			{
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_SELECTED:
-			{
-				if(stateTexts[DRAW_STATE_PRESSED_INSIDE])
-				{
-					return DRAW_STATE_PRESSED_INSIDE;
-				}
-				if(stateTexts[DRAW_STATE_PRESSED_OUTSIDE])
-				{
-					return DRAW_STATE_PRESSED_OUTSIDE;
-				}
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_DISABLED:
-			{
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-			case DRAW_STATE_HOVERED:
-			{
-				return DRAW_STATE_UNPRESSED;
-			}
-				break;
-            default:
-                break;
-		}
-		return DRAW_STATE_UNPRESSED;
+		return DRAW_STATE_DISABLED;
 	}
-	
-	void UIButton::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
+	else if(state & UIControl::STATE_SELECTED)
 	{
-		UIControl::LoadFromYamlNode(node, loader);
+		return DRAW_STATE_SELECTED;
+	}
+	else if(state & UIControl::STATE_PRESSED_INSIDE)
+	{
+		return DRAW_STATE_PRESSED_INSIDE;
+	}
+	else if(state & UIControl::STATE_PRESSED_OUTSIDE)
+	{
+		return DRAW_STATE_PRESSED_OUTSIDE;
+	}
+	else if(state & UIControl::STATE_HOVER)
+	{
+		return DRAW_STATE_HOVERED;
+	}
 		
-		static int32 stateArray[] = {STATE_NORMAL, STATE_PRESSED_INSIDE, STATE_PRESSED_OUTSIDE, STATE_DISABLED, STATE_SELECTED, STATE_HOVER};
-		static String statePostfix[] = {"Normal", "PressedInside", "PressedOutside", "Disabled", "Selected", "Hover"};
-	
-		for(int k = 0; k < STATE_COUNT; ++k)
+	return DRAW_STATE_UNPRESSED;
+}
+
+int32 UIButton::BackgroundIndexForState(eButtonDrawState buttonState)
+{
+	if(stateBacks[buttonState])
+	{//return current state if dada for state is present
+		return buttonState;
+	}
+	switch (buttonState) 
+	{//find other state if data for the requested state is absent
+		case DRAW_STATE_PRESSED_INSIDE:
 		{
-			YamlNode * stateSpriteNode = node->Get(Format("stateSprite%s", statePostfix[k].c_str()));
-			if(stateSpriteNode)
+			if(stateBacks[DRAW_STATE_PRESSED_OUTSIDE])
 			{
-				YamlNode * spriteNode = stateSpriteNode->Get(0);
-				if(spriteNode)
-				{
-                    	YamlNode * frameNode = stateSpriteNode->Get(1);
-					SetStateSprite(stateArray[k], spriteNode->AsString(), frameNode ? frameNode->AsInt() : 0);
-				}
+				return DRAW_STATE_PRESSED_OUTSIDE;
 			}
-            
-            YamlNode * stateDrawTypeNode = node->Get(Format("stateDrawType%s", statePostfix[k].c_str()));
-			if(stateDrawTypeNode)
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_PRESSED_OUTSIDE:
+		{
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_SELECTED:
+		{
+			if(stateBacks[DRAW_STATE_PRESSED_INSIDE])
 			{
-				const auto type = (UIControlBackground::eDrawType)loader->GetDrawTypeFromNode(stateDrawTypeNode);
-                SetStateDrawType(stateArray[k], type);
-                
-                YamlNode * leftRightStretchCapNode = node->Get(Format("leftRightStretchCap%s", statePostfix[k].c_str()));
-                YamlNode * topBottomStretchCapNode = node->Get(Format("topBottomStretchCap%s", statePostfix[k].c_str()));
+				return DRAW_STATE_PRESSED_INSIDE;
+			}
+			if(stateBacks[DRAW_STATE_PRESSED_OUTSIDE])
+			{
+				return DRAW_STATE_PRESSED_OUTSIDE;
+			}
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_DISABLED:
+		{
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_HOVERED:
+		{
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+        default:
+            break;
+	}
+	return DRAW_STATE_UNPRESSED;
+}
 
-                if(leftRightStretchCapNode)
-                {
-                    const float32 leftStretchCap = leftRightStretchCapNode->AsFloat();
-                    GetActualBackground(stateArray[k])->SetLeftRightStretchCap(leftStretchCap);
-                }
-                
-                if(topBottomStretchCapNode)
-                {
-                    const float32 topStretchCap = topBottomStretchCapNode->AsFloat();
-                    GetActualBackground(stateArray[k])->SetTopBottomStretchCap(topStretchCap);
-                }
-			}
-            
-            YamlNode * stateAlignNode = node->Get(Format("stateAlign%s", statePostfix[k].c_str()));
-			if(stateAlignNode)
-			{
-				const int32 align = loader->GetAlignFromYamlNode(stateAlignNode);
-                SetStateAlign(stateArray[k],align);
-			}
+int32 UIButton::TextIndexForState(eButtonDrawState buttonState)
+{
+	if(stateTexts[buttonState])
+	{
+		return buttonState;
+	}
 
-			YamlNode * stateFontNode = node->Get(Format("stateFont%s", statePostfix[k].c_str()));
-			if(stateFontNode)
+	switch (buttonState) 
+	{//find other state if data for the requested state is absent
+		case DRAW_STATE_PRESSED_INSIDE:
+		{
+			if(stateTexts[DRAW_STATE_PRESSED_OUTSIDE])
 			{
-				Font * font = loader->GetFontByName(stateFontNode->AsString());
-				if(font)
-                    SetStateFont(stateArray[k], font);
+				return DRAW_STATE_PRESSED_OUTSIDE;
 			}
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_PRESSED_OUTSIDE:
+		{
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_SELECTED:
+		{
+			if(stateTexts[DRAW_STATE_PRESSED_INSIDE])
+			{
+				return DRAW_STATE_PRESSED_INSIDE;
+			}
+			if(stateTexts[DRAW_STATE_PRESSED_OUTSIDE])
+			{
+				return DRAW_STATE_PRESSED_OUTSIDE;
+			}
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_DISABLED:
+		{
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+		case DRAW_STATE_HOVERED:
+		{
+			return DRAW_STATE_UNPRESSED;
+		}
+			break;
+        default:
+            break;
+	}
+	return DRAW_STATE_UNPRESSED;
+}
+	
+void UIButton::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
+{
+	UIControl::LoadFromYamlNode(node, loader);
+		
+	static int32 stateArray[] = {STATE_NORMAL, STATE_PRESSED_INSIDE, STATE_PRESSED_OUTSIDE, STATE_DISABLED, STATE_SELECTED, STATE_HOVER};
+	static String statePostfix[] = {"Normal", "PressedInside", "PressedOutside", "Disabled", "Selected", "Hover"};
+	
+	for(int k = 0; k < STATE_COUNT; ++k)
+	{
+		YamlNode * stateSpriteNode = node->Get(Format("stateSprite%s", statePostfix[k].c_str()));
+		if(stateSpriteNode)
+		{
+			YamlNode * spriteNode = stateSpriteNode->Get(0);
+			if(spriteNode)
+			{
+                    YamlNode * frameNode = stateSpriteNode->Get(1);
+				SetStateSprite(stateArray[k], spriteNode->AsString(), frameNode ? frameNode->AsInt() : 0);
+			}
+		}
+            
+        YamlNode * stateDrawTypeNode = node->Get(Format("stateDrawType%s", statePostfix[k].c_str()));
+		if(stateDrawTypeNode)
+		{
+			const auto type = (UIControlBackground::eDrawType)loader->GetDrawTypeFromNode(stateDrawTypeNode);
+            SetStateDrawType(stateArray[k], type);
+                
+            YamlNode * leftRightStretchCapNode = node->Get(Format("leftRightStretchCap%s", statePostfix[k].c_str()));
+            YamlNode * topBottomStretchCapNode = node->Get(Format("topBottomStretchCap%s", statePostfix[k].c_str()));
+
+            if(leftRightStretchCapNode)
+            {
+                const float32 leftStretchCap = leftRightStretchCapNode->AsFloat();
+                GetActualBackground(stateArray[k])->SetLeftRightStretchCap(leftStretchCap);
+            }
+                
+            if(topBottomStretchCapNode)
+            {
+                const float32 topStretchCap = topBottomStretchCapNode->AsFloat();
+                GetActualBackground(stateArray[k])->SetTopBottomStretchCap(topStretchCap);
+            }
+		}
+            
+        YamlNode * stateAlignNode = node->Get(Format("stateAlign%s", statePostfix[k].c_str()));
+		if(stateAlignNode)
+		{
+			const int32 align = loader->GetAlignFromYamlNode(stateAlignNode);
+            SetStateAlign(stateArray[k],align);
+		}
+
+		YamlNode * stateFontNode = node->Get(Format("stateFont%s", statePostfix[k].c_str()));
+		if(stateFontNode)
+		{
+			Font * font = loader->GetFontByName(stateFontNode->AsString());
+			if(font)
+                SetStateFont(stateArray[k], font);
+		}
 			
-			YamlNode * stateTextNode = node->Get(Format("stateText%s", statePostfix[k].c_str()));
-			if(stateTextNode)
-			{
-				SetStateText(stateArray[k], LocalizedString(stateTextNode->AsWString()));
-			}
-		}
-
-		for(int k = 0; k < STATE_COUNT; ++k)
+		YamlNode * stateTextNode = node->Get(Format("stateText%s", statePostfix[k].c_str()));
+		if(stateTextNode)
 		{
-			YamlNode * colorInheritNode = node->Get("colorInherit");
-			if(colorInheritNode)
+			SetStateText(stateArray[k], LocalizedString(stateTextNode->AsWString()));
+		}
+	}
+
+	for(int k = 0; k < STATE_COUNT; ++k)
+	{
+		YamlNode * colorInheritNode = node->Get("colorInherit");
+		if(colorInheritNode)
+		{
+            const auto type = (UIControlBackground::eColorInheritType)loader->GetColorInheritTypeFromNode(colorInheritNode);
+			for(int32 i = 0; i < DRAW_STATE_COUNT; ++i)
 			{
-                const auto type = (UIControlBackground::eColorInheritType)loader->GetColorInheritTypeFromNode(colorInheritNode);
-				for(int32 i = 0; i < DRAW_STATE_COUNT; ++i)
+				if(stateBacks[i])
 				{
-					if(stateBacks[i])
-					{
-						stateBacks[i]->SetColorInheritType(type);
-					}
+					stateBacks[i]->SetColorInheritType(type);
 				}
 			}
 		}
 	}
+}
 };
