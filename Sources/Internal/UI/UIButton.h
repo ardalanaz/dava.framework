@@ -229,7 +229,8 @@ protected:
 	virtual ~UIButton();
 	eButtonDrawState GetDrawStateForControlState(int32 state);
 
-    void ForEachStateCreateBackWith(int32 states, std::function<void (UIControlBackground*)> functr);
+    void ForEachEnabledState(int32 states, std::function<void (int32)> functr);
+    void MakeWithoutSelectedText(std::function<void (void)> functr);
 
 private:
 
@@ -244,7 +245,3 @@ private:
 };
 
 #endif // __DAVAENGINE_BUTTON_H__
-
-
-
-
