@@ -157,7 +157,7 @@ namespace DAVA
 
     void UIButton::ForEachStateCreateBackWith(int32 states, std::function<void (UIControlBackground*)> functr)
     {
-        for(int i = 0; i < DRAW_STATE_COUNT; ++i)
+        for(int i = 0; (i < DRAW_STATE_COUNT) && (states != 0); ++i)
         {
             if(states & 0x01)
             {

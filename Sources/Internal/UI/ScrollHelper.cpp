@@ -48,9 +48,7 @@ ScrollHelper::ScrollHelper()
 
 void ScrollHelper::SetPosition(float32 pos)
 {
-	position = pos; // ?? Clamp(pos, -elementSize, 0.f);
-    position = Min(position, 0.f);
-    position = Max(position, -elementSize);
+	position = Clamp(pos, -elementSize, 0.f);
 }
 
 void ScrollHelper::SetElementSize(float32 newSize)
@@ -135,22 +133,15 @@ float ScrollHelper::GetPosition(float positionDelta, float timeDelta, bool isPos
 		if(totalDeltaMove != 0)
 		{
 			speed = totalDeltaMove / totalDeltaTime;
-			speed = Min(speed,  virtualViewSize * 2);
-			speed = Max(speed, -virtualViewSize * 2);
+			speed = Clamp(speed, -virtualViewSize * 2, virtualViewSize * 2);
 		}
 			
 		if(position > 0)
 		{
 			if(backward != 0 && slowDown != 0)
 			{
-				if(slowDown != 0)
-				{
-					speed -= virtualViewSize * timeDelta / slowDown / backward;
-				}
-				else // 'if' one level up will prevent this forever
-				{
-					speed -= virtualViewSize * timeDelta * 4 / backward;
-				}
+				speed -= virtualViewSize * timeDelta / slowDown / backward;
+
 				position += speed * timeDelta;
 				if(position < 0)
 				{
