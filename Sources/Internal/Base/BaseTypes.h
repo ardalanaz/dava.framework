@@ -96,7 +96,11 @@
 
 #include <mach/mach.h>
 #include <mach/mach_time.h>
+
 #include <unistd.h>
+#ifdef _POSIX_THREADS // KirylP: from pthread.h:131 for cpp11
+#   include <pthread.h>
+#endif
 
 #elif defined(__DAVAENGINE_ANDROID__)
 //TODO: specific includes

@@ -33,52 +33,22 @@
 namespace DAVA
 {
 
-#if defined(__DAVAENGINE_WIN32__)
-
 Mutex::Mutex()
 {
-	InitializeCriticalSection(&criticalSection);
 }
 
 Mutex::~Mutex()
 {
-	DeleteCriticalSection(&criticalSection);
 }
 
 void Mutex::Lock()
 {
-	EnterCriticalSection(&criticalSection); 
+    locker.lock();
 }
 
 void Mutex::Unlock()
 {
-	LeaveCriticalSection(&criticalSection);
+	locker.unlock();
 }
-
-#elif defined(__DAVAENGINE_IPHONE__) || defined(__DAVAENGINE_MACOS__) || defined(__DAVAENGINE_ANDROID__)
-
-Mutex::Mutex()
-{
-//	mutex = PTHREAD_MUTEX_INITIALIZER;
-	pthread_mutex_init(&mutex, 0);
-}
-
-Mutex::~Mutex()
-{
-	
-}
-
-void Mutex::Lock()
-{
-	pthread_mutex_lock(&mutex);
-}
-
-void Mutex::Unlock()
-{
-	pthread_mutex_unlock(&mutex);
-}
-
-#endif //PLATFORMS
-
 
 };

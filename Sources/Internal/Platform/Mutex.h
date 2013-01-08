@@ -30,8 +30,9 @@
 #ifndef __DAVAENGINE_MUTEX_H__
 #define __DAVAENGINE_MUTEX_H__
 
-#include "Base/BaseTypes.h"
 #include "Base/BaseObject.h"
+
+#include <mutex>
 
 namespace DAVA
 {
@@ -62,11 +63,7 @@ public:
 	*/
 	virtual void Unlock();
 
-#if defined(__DAVAENGINE_WIN32__)
-	CRITICAL_SECTION criticalSection;
-#elif defined(__DAVAENGINE_IPHONE__) || defined(__DAVAENGINE_MACOS__) || defined(__DAVAENGINE_ANDROID__)
-	pthread_mutex_t mutex;
-#endif //PLATFORMS
+    std::mutex locker;
 };
 
 };

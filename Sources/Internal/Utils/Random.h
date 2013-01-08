@@ -67,9 +67,9 @@
 // Not thread safe (unless auto-initialization is avoided and each thread has
 // its own MTRand object)
 
-#include <iostream>
+//#include <iostream>
+//#include <cstdio>
 #include <climits>
-#include <cstdio>
 #include <ctime>
 #include <cmath>
 #include "Base/BaseTypes.h"

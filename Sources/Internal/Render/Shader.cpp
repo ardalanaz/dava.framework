@@ -415,7 +415,7 @@ GLint Shader::CompileShader(GLuint *shader, GLenum type, GLint count, const GLch
         };
         const GLint multipleCounts[] = 
         {
-            defines.length(),
+            static_cast<GLint>(defines.length()),
             count,
         };
         RENDER_VERIFY(glShaderSource(*shader, 2, multipleSources, multipleCounts));	// set source code in the shader
