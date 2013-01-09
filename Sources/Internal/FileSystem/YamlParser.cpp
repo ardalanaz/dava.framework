@@ -1408,11 +1408,11 @@ bool YamlParser::SaveNodeRecursive(File* fileToSave, const String& nodeName,
                 YamlNode* childNode = t->second;
                 if (childNode->GetType() == YamlNode::TYPE_MAP)
                 {
-                    mapNodes.insert(std::make_pair<String, YamlNode*>(t->first, childNode));
+                    mapNodes.insert(std::make_pair(t->first, childNode));
                 }
                 else
                 {
-                    nonMapNodes.insert(std::make_pair<String, YamlNode*>(t->first, childNode));
+                    nonMapNodes.insert(std::make_pair(t->first, childNode));
                 }
             }
             

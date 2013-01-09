@@ -189,6 +189,15 @@ void UIButton::SetStateAlign(int32 state, int32 align)
             CreateBackForState(eButtonDrawState(i))->SetAlign(align); 
         });
 }
+    
+void UIButton::CreateBackgroundForState(int32 state)
+{
+    ForEachEnabledState(state,
+        [this](int32 i)
+        {
+            CreateBackForState(eButtonDrawState(i));
+        });
+}
 
 Sprite* UIButton::GetStateSprite(int32 state)
 {
@@ -235,14 +244,11 @@ void UIButton::SetStateFont(int32 state, Font *font)
 	
 void UIButton::SetStateFontColor(int32 state, const Color& fontColor)
 {
-	for(int i = 0; i < DRAW_STATE_COUNT; i++)
-	{
-		if(state & 0x01)
-		{
-			CreateTextForState((eButtonDrawState)i)->SetFontColor(fontColor);
-		}
-		state >>= 1;
-	}
+    ForEachEnabledState(state,
+        [this, fontColor](int32 i)
+        {
+			CreateTextForState(eButtonDrawState(i))->SetFontColor(fontColor);
+        });
 }
 
 void UIButton::SetStateText(int32 state, const WideString &text, const Vector2 &requestedTextRectSize/* = Vector2(0,0)*/)
