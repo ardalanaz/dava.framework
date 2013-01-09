@@ -39,6 +39,7 @@
 #include "Scene3D/Scene.h"
 #include "Scene3D/SceneFileV2.h"
 #include "Scene3D/LightNode.h"
+#include "Render/TextureDescriptor.h"
 
 namespace DAVA 
 {
@@ -177,6 +178,10 @@ int32 Material::Release()
 
 Material::~Material()
 {
+    for (int32 tc = 0; tc < TEXTURE_COUNT; ++tc)
+    {
+        SafeRelease(textures[tc]);
+    }
 }
     
     
@@ -387,9 +392,6 @@ void Material::Save(KeyedArchive * keyedArchive, SceneFileV2 * sceneFile)
 
 void Material::Load(KeyedArchive * keyedArchive, SceneFileV2 * sceneFile)
 {
-    Image::EnableAlphaPremultiplication(false);
-    Texture::EnableMipmapGeneration();
-
     DataNode::Load(keyedArchive, sceneFile);
 
     int32 texCount = keyedArchive->GetInt32("mat.texCount");
@@ -409,10 +411,6 @@ void Material::Load(KeyedArchive * keyedArchive, SceneFileV2 * sceneFile)
                 Logger::Debug("--- load material texture: %s abs:%s", relativePathname.c_str(), names[k].c_str());
             
             textures[k] = Texture::CreateFromFile(names[k]);
-            if (textures[k])
-            {
-                textures[k]->SetWrapMode(Texture::WRAP_REPEAT, Texture::WRAP_REPEAT);
-            }
         }
         
 //        if (names[k].size())
@@ -420,8 +418,6 @@ void Material::Load(KeyedArchive * keyedArchive, SceneFileV2 * sceneFile)
 //            Logger::Debug("- texture: %s index:%d", names[k].c_str(), index);
 //        } 
     }
-    Texture::DisableMipmapGeneration();
-    Image::EnableAlphaPremultiplication(true);
     
     
     diffuseColor = keyedArchive->GetByteArrayAsType("mat.diffuse", diffuseColor);
@@ -549,9 +545,19 @@ void Material::PrepareRenderState()
 		renderStateBlock.SetTexture(textures[Material::TEXTURE_DIFFUSE], 0);
 	}
 
-	if (textures[Material::TEXTURE_DECAL]) // this is normal map as well
+	if(MATERIAL_PIXEL_LIT_NORMAL_DIFFUSE == type || MATERIAL_PIXEL_LIT_NORMAL_DIFFUSE_SPECULAR == type || MATERIAL_PIXEL_LIT_NORMAL_DIFFUSE_SPECULAR_MAP == type)
 	{
-		renderStateBlock.SetTexture(textures[Material::TEXTURE_DECAL], 1);
+		if (textures[Material::TEXTURE_NORMALMAP])
+		{
+			renderStateBlock.SetTexture(textures[Material::TEXTURE_NORMALMAP], 1);
+		}
+	}
+	else
+	{
+		if (textures[Material::TEXTURE_DECAL])
+		{
+			renderStateBlock.SetTexture(textures[Material::TEXTURE_DECAL], 1);
+		}
 	}
 
 	if (isOpaque || isTwoSided)
@@ -567,13 +573,15 @@ void Material::PrepareRenderState()
 	if(isAlphablend)
 	{
 		renderStateBlock.state |= RenderStateBlock::STATE_BLEND;
-		//Dizz: dunno what it was for
-		//RenderManager::Instance()->RemoveState(RenderStateBlock::STATE_DEPTH_TEST);
+		//Dizz: temporary solution
+		renderStateBlock.state &= ~RenderStateBlock::STATE_DEPTH_WRITE;
 
 		renderStateBlock.SetBlendMode(blendSrc, blendDst);
 	}
 	else
 	{
+		//Dizz: temporary solution
+		renderStateBlock.state |= RenderStateBlock::STATE_DEPTH_WRITE;
 		renderStateBlock.state &= ~RenderStateBlock::STATE_BLEND;
 	}
 
@@ -755,8 +763,16 @@ void Material::SetTexture(eTextureLevel level, Texture * texture)
     if (texture == textures[level])return;
     
     SafeRelease(textures[level]);
-    names[level] = "";
+	names[level] = String("");
+
     textures[level] = SafeRetain(texture);
+	if(textures[level])
+	{
+		if(!textures[level]->isRenderTarget)
+		{
+			names[level] = textures[level]->GetPathname();
+		}
+	}
 }
 
 void Material::SetTexture(eTextureLevel level, const String & textureName)
@@ -764,19 +780,12 @@ void Material::SetTexture(eTextureLevel level, const String & textureName)
     SafeRelease(textures[level]);
     names[level] = "";
  
-    Image::EnableAlphaPremultiplication(false);
-    Texture::EnableMipmapGeneration();
-
     Texture *t = Texture::CreateFromFile(textureName);
     if(t)
     {
-		t->SetWrapMode(Texture::WRAP_REPEAT, Texture::WRAP_REPEAT);
         textures[level] = t;
         names[level] = textureName;
     }
-
-    Texture::DisableMipmapGeneration();
-    Image::EnableAlphaPremultiplication(true);
 }
 
 void Material::SetAlphablend(bool _isAlphablend)

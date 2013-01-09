@@ -6,17 +6,18 @@
 #include "../SceneEditor/EditorConfig.h"
 #include "../SceneEditor/SceneValidator.h"
 
-#include "../Qt/QtUtils.h"
-#include "../Qt/GUIState.h"
-#include "../Qt/QtMainWindowHandler.h"
-#include "../Qt/SceneData.h"
-#include "../Qt/SceneDataManager.h"
+#include "../Qt/Main/QtUtils.h"
+#include "../Qt/Main/GUIState.h"
+#include "../Qt/Main/QtMainWindowHandler.h"
+#include "../Qt/Scene/SceneData.h"
+#include "../Qt/Scene/SceneDataManager.h"
 
 #include <QFileDialog>
 #include <QString>
 
 using namespace DAVA;
 
+#if 0
 //Open Project
 CommandOpenProject::CommandOpenProject()
     :   Command(Command::COMMAND_CLEAR_UNDO_QUEUE)
@@ -37,8 +38,12 @@ void CommandOpenProject::Execute()
         }
         
         EditorSettings::Instance()->SetProjectPath(projectPath);
-        EditorSettings::Instance()->SetDataSourcePath(projectPath + String("DataSource/3d/"));
+        String dataSource3Dpathname = projectPath + String("DataSource/3d/");
+        EditorSettings::Instance()->SetDataSourcePath(dataSource3Dpathname);
 		EditorSettings::Instance()->Save();
+
+        SceneValidator::Instance()->CreateDefaultDescriptors(dataSource3Dpathname);
+		SceneValidator::Instance()->SetPathForChecking(projectPath);
 
 		EditorConfig::Instance()->ParseConfig(projectPath + "EditorConfig.yaml");
 		
@@ -48,17 +53,18 @@ void CommandOpenProject::Execute()
             screen->UpdateModificationPanel();
 		}
 		
-		SceneValidator::Instance()->SetPathForChecking(projectPath);
-
-		SceneData *activeScene = SceneDataManager::Instance()->GetActiveScene();
+		/* #### dock -->
+		SceneData *activeScene = SceneDataManager::Instance()->SceneGetActive();
         if(activeScene)
         {
             activeScene->ReloadLibrary();
         }
+		<-- */
 	}
 
 	QtMainWindowHandler::Instance()->RestoreDefaultFocus();
 }
+#endif
 
 
 //Open scene
@@ -107,6 +113,7 @@ void CommandNewScene::Execute()
     if(screen)
     {
         screen->NewScene();
+        SceneValidator::Instance()->EnumerateSceneTextures();
     }
 }
 
@@ -120,7 +127,7 @@ CommandSaveScene::CommandSaveScene()
 
 void CommandSaveScene::Execute()
 {
-    SceneData *activeScene = SceneDataManager::Instance()->GetActiveScene();
+    SceneData *activeScene = SceneDataManager::Instance()->SceneGetActive();
     if(activeScene->CanSaveScene())
     {
         SceneEditorScreenMain *screen = dynamic_cast<SceneEditorScreenMain *>(UIScreenManager::Instance()->GetScreen());
@@ -153,7 +160,7 @@ void CommandSaveScene::Execute()
 }
 
 //Export
-CommandExport::CommandExport(ResourceEditor::eExportFormat fmt)
+CommandExport::CommandExport(ImageFileFormat fmt)
     :   Command(Command::COMMAND_WITHOUT_UNDO_EFFECT)
     ,   format(fmt)
 {

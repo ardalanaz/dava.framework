@@ -68,6 +68,7 @@ public:
     
     void AllocChilds()
     {
+		SafeDeleteArray(childs);
         childs = new LandQuadTreeNode[4];
     }
     
@@ -143,7 +144,7 @@ public:
         \brief Builds landscape from heightmap image and bounding box of this landscape block
         \param[in] landscapeBox axial-aligned bounding box of the landscape block
      */
-    void BuildLandscapeFromHeightmapImage(const String & heightmapPathname, const AABBox3 & landscapeBox);
+    virtual void BuildLandscapeFromHeightmapImage(const String & heightmapPathname, const AABBox3 & landscapeBox);
     
     enum eTextureLevel
     {
@@ -201,7 +202,7 @@ public:
         \param[in] level 
         \returns current texture
 	 */
-	Texture * GetTexture(eTextureLevel level);
+	virtual Texture * GetTexture(eTextureLevel level);
     
 	/**
         \brief Get texture name that was previously set in SetTexture.
@@ -272,7 +273,7 @@ public:
     Heightmap *GetHeightmap();
     virtual void SetHeightmap(Heightmap *height);
     
-    void UpdateFullTiledTexture();
+    virtual void UpdateFullTiledTexture();
     String SaveFullTiledTexture();
     
     void SetFog(bool _fogEnabled);
@@ -382,10 +383,9 @@ protected:
     Heightmap *heightmap;
     String heightmapPath;
     
-    enum eConst
-    {
-        TEXTURE_TILE_FULL_SIZE = 2048
-    };
+//     static const float32 TEXTURE_TILE_FULL_SIZE = 2048;
+	static const uint32 TEXTURE_TILE_FULL_SIZE = 2048;
+// 	static const float32 TEXTURE_TILE_FULL_SIZE;
     
     Vector<LandQuadTreeNode<LandscapeQuad> *>lod0quads;
     Vector<LandQuadTreeNode<LandscapeQuad> *>lodNot0quads;

@@ -12,30 +12,40 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Classes\BaseScreen.h" />
+    <ClInclude Include="Classes\CloneTest.h" />
     <ClInclude Include="Classes\Config.h" />
+    <ClInclude Include="Classes\DXTTest.h" />
     <ClInclude Include="Classes\EntityTest.h" />
     <ClInclude Include="Classes\FrameworkMain.h" />
     <ClInclude Include="Classes\GameCore.h" />
     <ClInclude Include="Classes\HashMapTest.h" />
+    <ClInclude Include="Classes\KeyedArchiveTest.h" />
+    <ClInclude Include="Classes\KeyedArchiveYamlTest.h" />
     <ClInclude Include="Classes\MemoryAllocatorsTest.h" />
     <ClInclude Include="Classes\PVRTest.h" />
     <ClInclude Include="Classes\SampleTest.h" />
     <ClInclude Include="Classes\SoundTest.h" />
     <ClInclude Include="Classes\SplitTest.h" />
     <ClInclude Include="Classes\TestTemplate.h" />
+    <ClInclude Include="Classes\TextureUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Classes\BaseScreen.cpp" />
+    <ClCompile Include="Classes\CloneTest.cpp" />
+    <ClCompile Include="Classes\DXTTest.cpp" />
     <ClCompile Include="Classes\EntityTest.cpp" />
     <ClCompile Include="Classes\FrameworkMain.cpp" />
     <ClCompile Include="Classes\GameCore.cpp" />
     <ClCompile Include="Classes\HashMapTest.cpp" />
+    <ClCompile Include="Classes\KeyedArchiveTest.cpp" />
+    <ClCompile Include="Classes\KeyedArchiveYamlTest.cpp" />
     <ClCompile Include="Classes\MemoryAllocatorsTest.cpp" />
     <ClCompile Include="Classes\PVRTest.cpp" />
     <ClCompile Include="Classes\SampleTest.cpp" />
     <ClCompile Include="Classes\SoundTest.cpp" />
     <ClCompile Include="Classes\SplitTest.cpp" />
     <ClCompile Include="Classes\TestTemplate.cpp" />
+    <ClCompile Include="Classes\TextureUtils.cpp" />
     <ClCompile Include="Win32Specific\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -46,7 +56,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -97,6 +107,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

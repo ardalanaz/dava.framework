@@ -4,6 +4,7 @@
 #include "Command.h"
 #include "../Constants.h"
 
+/*
 class CommandOpenProject: public Command
 {
 public:	
@@ -13,6 +14,7 @@ protected:
     
     virtual void Execute();
 };
+*/
 
 
 class CommandOpenScene: public Command
@@ -53,14 +55,14 @@ class CommandExport: public Command
 {
     
 public:	
-	CommandExport(ResourceEditor::eExportFormat fmt);
+	CommandExport(DAVA::ImageFileFormat fmt);
     
 protected:	
     
     virtual void Execute();
     
 protected:
-    ResourceEditor::eExportFormat format;
+    DAVA::ImageFileFormat format;
     
 };
 

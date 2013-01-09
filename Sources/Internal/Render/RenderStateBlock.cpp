@@ -80,7 +80,7 @@ void RenderStateBlock::Reset(bool doHardwareReset)
     if (doHardwareReset)
     {
         RenderManager::Instance()->LockNonMain();
-        Logger::Debug("Do hardware reset");
+//        Logger::Debug("Do hardware reset");
         // PrintBackTraceToLog();
         SetColorInHW();
         SetEnableBlendingInHW();
@@ -374,9 +374,9 @@ inline void RenderStateBlock::SetColorInHW() const
     if (renderer != Core::RENDERER_OPENGL_ES_2_0)
     {
 #if defined (LOG_FINAL_RENDER_STATE)
-        Logger::Debug("RenderState::color = (%f, %f, %f, %f)", color.r * color.a, color.g * color.a, color.b * color.a, color.a);
+        Logger::Debug("RenderState::color = (%f, %f, %f, %f)", color.r, color.g, color.b, color.a);
 #endif
-        RENDER_VERIFY(glColor4f(color.r * color.a, color.g * color.a, color.b * color.a, color.a));
+        RENDER_VERIFY(glColor4f(color.r, color.g, color.b, color.a));
     }
 }
     
@@ -478,13 +478,13 @@ inline void RenderStateBlock::SetTextureLevelInHW(uint32 textureLevel) const
 #if defined (LOG_FINAL_RENDER_STATE)
         Logger::Debug("RenderState::bind_texture %d = (%d)", textureLevel, currentTexture[textureLevel]->id);
 #endif    
-        BindTexture(currentTexture[textureLevel]->id);
+        RenderManager::Instance()->HWglBindTexture(currentTexture[textureLevel]->id);
     }else
     {
 #if defined (LOG_FINAL_RENDER_STATE)
         Logger::Debug("RenderState::bind_texture %d = (%d)", textureLevel, 0);
 #endif    
-        BindTexture(0);
+        RenderManager::Instance()->HWglBindTexture(0);
     }    
 }
 inline void RenderStateBlock::SetDepthTestInHW() const

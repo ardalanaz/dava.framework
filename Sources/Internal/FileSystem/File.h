@@ -89,10 +89,6 @@ public:
 	 \returns file instance
 	 */
 	static File * CreateFromSystemPath(const String &filePath, uint32 attributes);
-#if defined(__DAVAENGINE_ANDROID__)
-	static File * CreateFromSystemPath(zip *APKArchive, const String &filename);
-#endif //#if defined(__DAVAENGINE_ANDROID__)
-
 
 	/**
 		\brief Get this file name
@@ -122,7 +118,15 @@ public:
 	 */
 	virtual bool WriteString(const String & string);
 
-	/** 
+	/**
+     \brief Write string
+     write string without '\0' from current position in file
+     \param[in] string - string data loaded to this variable
+     \return true if success otherwise false
+	 */
+  	virtual bool WriteNonTerminatedString(const String & string);
+	
+    /**
 		\brief Write one line of text
 		Write string and add /r/n in the end.
 		\param[in] string - string to write
@@ -177,6 +181,8 @@ public:
 	//! return true if end of file reached and false in another case
 	virtual bool IsEof();
 	
+    static String GetModificationDate(const String & filePathname);
+    
 private:
 	FILE	*	file;
 	uint32		size;

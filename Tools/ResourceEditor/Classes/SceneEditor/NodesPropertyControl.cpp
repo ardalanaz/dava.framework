@@ -78,6 +78,8 @@ NodesPropertyControl::~NodesPropertyControl()
     SafeRelease(btnPlus);
 
     SafeRelease(propertyList);
+    
+    SafeRelease(currentSceneNode);
 }
 
 void NodesPropertyControl::WillAppear()
@@ -106,11 +108,14 @@ void NodesPropertyControl::WillDisappear()
         
         ReleaseChildLodData();
     }
+    
+    SafeRelease(currentSceneNode);
 }
 
 void NodesPropertyControl::ReadFrom(SceneNode *sceneNode)
 {
-    currentSceneNode = sceneNode;
+	SafeRelease(currentSceneNode);
+    currentSceneNode = SafeRetain(sceneNode);
     currentDataNode = NULL;
     ReleaseChildLodData();
     
@@ -817,9 +822,22 @@ void NodesPropertyControl::UpdateFieldsForCurrentNode()
 {
     if(currentSceneNode)
     {
+		SafeRetain(currentSceneNode);
         ReadFrom(currentSceneNode);
+		SafeRelease(currentSceneNode);
     }
 }
+
+void NodesPropertyControl::UpdateMatricesForCurrentNode()
+{
+	if(!createNodeProperties && currentSceneNode)
+	{
+		propertyList->SetBoolPropertyValue("property.scenenode.isVisible", currentSceneNode->GetVisible());
+		propertyList->SetMatrix4PropertyValue("property.scenenode.localmatrix", currentSceneNode->GetLocalTransform());
+		propertyList->SetMatrix4PropertyValue("property.scenenode.worldmatrix", currentSceneNode->GetWorldTransform());
+	}
+}
+
 
 bool NodesPropertyControl::GetHeaderState(const String & headerName, bool defaultValue)
 {

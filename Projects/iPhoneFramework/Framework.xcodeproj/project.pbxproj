@@ -40,6 +40,10 @@
 		4780AFCF14C499E600BAA259 /* SceneManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4780AFCB14C499E600BAA259 /* SceneManager.cpp */; };
 		4780AFD014C499E600BAA259 /* SceneManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4780AFCC14C499E600BAA259 /* SceneManager.h */; };
 		47F00E7F140FE6C10014D904 /* SpriteNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 47F00E7E140FE6C10014D904 /* SpriteNode.cpp */; };
+		492A98DC1644149F006AAE2A /* Image.mm in Sources */ = {isa = PBXBuildFile; fileRef = 492A98DB1644149F006AAE2A /* Image.mm */; };
+		496526D0167F173400107C70 /* libdxt_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 496526CF167F173400107C70 /* libdxt_ios.a */; };
+		49E7A1E716835EC400F63EFE /* LibDxtHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49E7A1E516835EC400F63EFE /* LibDxtHelper.cpp */; };
+		49E7A1E816835EC400F63EFE /* LibDxtHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 49E7A1E616835EC400F63EFE /* LibDxtHelper.h */; };
 		5C0105D21577993400E0B939 /* libmongodb_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C0105D11577993400E0B939 /* libmongodb_ios.a */; };
 		5C0105D7157799E000E0B939 /* MongodbClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C0105D5157799E000E0B939 /* MongodbClient.cpp */; };
 		5C0105D8157799E000E0B939 /* MongodbClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C0105D6157799E000E0B939 /* MongodbClient.h */; };
@@ -47,7 +51,6 @@
 		5C203F201579362300CB53E9 /* MongodbObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C203F1E1579362300CB53E9 /* MongodbObject.h */; };
 		5C44738B15B5A1C500028948 /* FixedSizePoolAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C44738515B5A1C500028948 /* FixedSizePoolAllocator.cpp */; };
 		5C44738C15B5A1C500028948 /* FixedSizePoolAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C44738615B5A1C500028948 /* FixedSizePoolAllocator.h */; };
-		5C44738D15B5A1C500028948 /* HashMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C44738715B5A1C500028948 /* HashMap.cpp */; };
 		5C44738E15B5A1C500028948 /* HashMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C44738815B5A1C500028948 /* HashMap.h */; };
 		5C44738F15B5A1C500028948 /* Mallocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C44738915B5A1C500028948 /* Mallocator.h */; };
 		5C44739015B5A1C500028948 /* TemplateHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C44738A15B5A1C500028948 /* TemplateHelpers.h */; };
@@ -136,9 +139,20 @@
 		C7EFBC6A158B4D1000BF42E0 /* VisibilityAABBoxComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = C7EFBC58158B4D1000BF42E0 /* VisibilityAABBoxComponent.h */; };
 		CCFF223615EE15B100363446 /* SwitchNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CCFF223415EE15B100363446 /* SwitchNode.cpp */; };
 		CCFF223715EE15B100363446 /* SwitchNode.h in Headers */ = {isa = PBXBuildFile; fileRef = CCFF223515EE15B100363446 /* SwitchNode.h */; };
+		E80842B5163913B7002A6A77 /* ImageLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E80842B3163913B7002A6A77 /* ImageLoader.cpp */; };
+		E80842B6163913B7002A6A77 /* ImageLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = E80842B4163913B7002A6A77 /* ImageLoader.h */; };
+		E856CF23162420F10065E32B /* TextureDescriptor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E856CF21162420F10065E32B /* TextureDescriptor.cpp */; };
+		E856CF24162420F10065E32B /* TextureDescriptor.h in Headers */ = {isa = PBXBuildFile; fileRef = E856CF22162420F10065E32B /* TextureDescriptor.h */; };
 		E85D7A6B1609E37F00F3EBBE /* ParticleLayerLong.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E85D7A691609E37F00F3EBBE /* ParticleLayerLong.cpp */; };
 		E85D7A6C1609E37F00F3EBBE /* ParticleLayerLong.h in Headers */ = {isa = PBXBuildFile; fileRef = E85D7A6A1609E37F00F3EBBE /* ParticleLayerLong.h */; };
-		E8F98C70161B163600B50BDA /* TexturePVR.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8F98C6F161B163600B50BDA /* TexturePVR.cpp */; };
+		E89ECC961663AA2700D17C41 /* FastName.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89ECC901663AA2700D17C41 /* FastName.cpp */; };
+		E89ECC971663AA2700D17C41 /* FastName.h in Headers */ = {isa = PBXBuildFile; fileRef = E89ECC911663AA2700D17C41 /* FastName.h */; };
+		E89ECC981663AA2700D17C41 /* FastNameMap.h in Headers */ = {isa = PBXBuildFile; fileRef = E89ECC921663AA2700D17C41 /* FastNameMap.h */; };
+		E89ECC991663AA2700D17C41 /* Hash.h in Headers */ = {isa = PBXBuildFile; fileRef = E89ECC931663AA2700D17C41 /* Hash.h */; };
+		E89ECC9A1663AA2700D17C41 /* Introspection.h in Headers */ = {isa = PBXBuildFile; fileRef = E89ECC941663AA2700D17C41 /* Introspection.h */; };
+		E89ECC9B1663AA2700D17C41 /* Meta.h in Headers */ = {isa = PBXBuildFile; fileRef = E89ECC951663AA2700D17C41 /* Meta.h */; };
+		E8C6B12516692EF7001EBE09 /* ParticleEffectNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8C6B12316692EF7001EBE09 /* ParticleEffectNode.cpp */; };
+		E8C6B12616692EF7001EBE09 /* ParticleEffectNode.h in Headers */ = {isa = PBXBuildFile; fileRef = E8C6B12416692EF7001EBE09 /* ParticleEffectNode.h */; };
 		E8F98C84161B301E00B50BDA /* LibPVRHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8F98C82161B301E00B50BDA /* LibPVRHelper.cpp */; };
 		E8F98C85161B301E00B50BDA /* LibPVRHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = E8F98C83161B301E00B50BDA /* LibPVRHelper.h */; };
 		E8F98C87161B326200B50BDA /* PVRDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = E8F98C86161B326200B50BDA /* PVRDefines.h */; };
@@ -599,6 +613,10 @@
 		4780AFCB14C499E600BAA259 /* SceneManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SceneManager.cpp; sourceTree = "<group>"; };
 		4780AFCC14C499E600BAA259 /* SceneManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SceneManager.h; sourceTree = "<group>"; };
 		47F00E7E140FE6C10014D904 /* SpriteNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SpriteNode.cpp; sourceTree = "<group>"; };
+		492A98DB1644149F006AAE2A /* Image.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Image.mm; sourceTree = "<group>"; };
+		496526CF167F173400107C70 /* libdxt_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdxt_ios.a; path = ../../Libs/libs/libdxt_ios.a; sourceTree = "<group>"; };
+		49E7A1E516835EC400F63EFE /* LibDxtHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LibDxtHelper.cpp; sourceTree = "<group>"; };
+		49E7A1E616835EC400F63EFE /* LibDxtHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LibDxtHelper.h; sourceTree = "<group>"; };
 		5C0105D11577993400E0B939 /* libmongodb_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmongodb_ios.a; path = ../../Libs/libs/libmongodb_ios.a; sourceTree = "<group>"; };
 		5C0105D5157799E000E0B939 /* MongodbClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MongodbClient.cpp; path = Database/MongodbClient.cpp; sourceTree = "<group>"; };
 		5C0105D6157799E000E0B939 /* MongodbClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MongodbClient.h; path = Database/MongodbClient.h; sourceTree = "<group>"; };
@@ -606,7 +624,6 @@
 		5C203F1E1579362300CB53E9 /* MongodbObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MongodbObject.h; path = Database/MongodbObject.h; sourceTree = "<group>"; };
 		5C44738515B5A1C500028948 /* FixedSizePoolAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FixedSizePoolAllocator.cpp; sourceTree = "<group>"; };
 		5C44738615B5A1C500028948 /* FixedSizePoolAllocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FixedSizePoolAllocator.h; sourceTree = "<group>"; };
-		5C44738715B5A1C500028948 /* HashMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HashMap.cpp; sourceTree = "<group>"; };
 		5C44738815B5A1C500028948 /* HashMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashMap.h; sourceTree = "<group>"; };
 		5C44738915B5A1C500028948 /* Mallocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mallocator.h; sourceTree = "<group>"; };
 		5C44738A15B5A1C500028948 /* TemplateHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TemplateHelpers.h; sourceTree = "<group>"; };
@@ -696,9 +713,21 @@
 		CCFF223415EE15B100363446 /* SwitchNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SwitchNode.cpp; sourceTree = "<group>"; };
 		CCFF223515EE15B100363446 /* SwitchNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SwitchNode.h; sourceTree = "<group>"; };
 		D2AAC07E0554694100DB518D /* libFramework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libFramework.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		E80842B3163913B7002A6A77 /* ImageLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImageLoader.cpp; sourceTree = "<group>"; };
+		E80842B4163913B7002A6A77 /* ImageLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLoader.h; sourceTree = "<group>"; };
+		E80D2FB2164D51A100C13D70 /* libbz2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.dylib; path = usr/lib/libbz2.dylib; sourceTree = SDKROOT; };
+		E856CF21162420F10065E32B /* TextureDescriptor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TextureDescriptor.cpp; sourceTree = "<group>"; };
+		E856CF22162420F10065E32B /* TextureDescriptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextureDescriptor.h; sourceTree = "<group>"; };
 		E85D7A691609E37F00F3EBBE /* ParticleLayerLong.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleLayerLong.cpp; sourceTree = "<group>"; };
 		E85D7A6A1609E37F00F3EBBE /* ParticleLayerLong.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParticleLayerLong.h; sourceTree = "<group>"; };
-		E8F98C6F161B163600B50BDA /* TexturePVR.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TexturePVR.cpp; sourceTree = "<group>"; };
+		E89ECC901663AA2700D17C41 /* FastName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FastName.cpp; sourceTree = "<group>"; };
+		E89ECC911663AA2700D17C41 /* FastName.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FastName.h; sourceTree = "<group>"; };
+		E89ECC921663AA2700D17C41 /* FastNameMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FastNameMap.h; sourceTree = "<group>"; };
+		E89ECC931663AA2700D17C41 /* Hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hash.h; sourceTree = "<group>"; };
+		E89ECC941663AA2700D17C41 /* Introspection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Introspection.h; sourceTree = "<group>"; };
+		E89ECC951663AA2700D17C41 /* Meta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Meta.h; sourceTree = "<group>"; };
+		E8C6B12316692EF7001EBE09 /* ParticleEffectNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleEffectNode.cpp; sourceTree = "<group>"; };
+		E8C6B12416692EF7001EBE09 /* ParticleEffectNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParticleEffectNode.h; sourceTree = "<group>"; };
 		E8F98C82161B301E00B50BDA /* LibPVRHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LibPVRHelper.cpp; sourceTree = "<group>"; };
 		E8F98C83161B301E00B50BDA /* LibPVRHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LibPVRHelper.h; sourceTree = "<group>"; };
 		E8F98C86161B326200B50BDA /* PVRDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PVRDefines.h; sourceTree = "<group>"; };
@@ -1114,6 +1143,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				496526D0167F173400107C70 /* libdxt_ios.a in Frameworks */,
 				0224B74A1598B40100CDEF9E /* libogg_ios.a in Frameworks */,
 				0224B74B1598B40100CDEF9E /* libogg_macos.a in Frameworks */,
 				0224B7331598AC2800CDEF9E /* libtheora_ios.a in Frameworks */,
@@ -1141,6 +1171,8 @@
 		0867D691FE84028FC02AAC07 /* Framework */ = {
 			isa = PBXGroup;
 			children = (
+				496526CF167F173400107C70 /* libdxt_ios.a */,
+				E80D2FB2164D51A100C13D70 /* libbz2.dylib */,
 				0224B7481598B40100CDEF9E /* libogg_ios.a */,
 				0224B7491598B40100CDEF9E /* libogg_macos.a */,
 				0224B7311598AC2800CDEF9E /* libtheora_ios.a */,
@@ -1340,12 +1372,17 @@
 		FECFB33E12E5904400C71562 /* Base */ = {
 			isa = PBXGroup;
 			children = (
+				E89ECC901663AA2700D17C41 /* FastName.cpp */,
+				E89ECC911663AA2700D17C41 /* FastName.h */,
+				E89ECC921663AA2700D17C41 /* FastNameMap.h */,
+				E89ECC931663AA2700D17C41 /* Hash.h */,
+				E89ECC941663AA2700D17C41 /* Introspection.h */,
+				E89ECC951663AA2700D17C41 /* Meta.h */,
 				C2F0A4F9161DEA8C003A2006 /* Observable.cpp */,
 				C2F0A4FA161DEA8C003A2006 /* Observable.h */,
 				C2F0A4FB161DEA8C003A2006 /* Observer.h */,
 				5C44738515B5A1C500028948 /* FixedSizePoolAllocator.cpp */,
 				5C44738615B5A1C500028948 /* FixedSizePoolAllocator.h */,
-				5C44738715B5A1C500028948 /* HashMap.cpp */,
 				5C44738815B5A1C500028948 /* HashMap.h */,
 				5C44738915B5A1C500028948 /* Mallocator.h */,
 				5C44738A15B5A1C500028948 /* TemplateHelpers.h */,
@@ -1587,6 +1624,10 @@
 		FECFB3D112E5904400C71562 /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				49E7A1E516835EC400F63EFE /* LibDxtHelper.cpp */,
+				49E7A1E616835EC400F63EFE /* LibDxtHelper.h */,
+				E80842B3163913B7002A6A77 /* ImageLoader.cpp */,
+				E80842B4163913B7002A6A77 /* ImageLoader.h */,
 				5CBF71DD15C6E46100CD1736 /* RenderOptions.cpp */,
 				5CBF71DE15C6E46100CD1736 /* RenderOptions.h */,
 				5CFD7DF41564DC58009692EE /* ImageConvert.h */,
@@ -1613,6 +1654,7 @@
 				FECFB3EC12E5904400C71562 /* DynamicVertexBuffer.h */,
 				FECFB3ED12E5904400C71562 /* Image.cpp */,
 				FECFB3EE12E5904400C71562 /* Image.h */,
+				492A98DB1644149F006AAE2A /* Image.mm */,
 				FECFB3EF12E5904400C71562 /* IndexBuffer.h */,
 				FECFB3F012E5904400C71562 /* LibPngHelpers.cpp */,
 				FECFB3F112E5904400C71562 /* LibPngHelpers.h */,
@@ -1644,7 +1686,8 @@
 				E8F98C86161B326200B50BDA /* PVRDefines.h */,
 				E8F98C82161B301E00B50BDA /* LibPVRHelper.cpp */,
 				E8F98C83161B301E00B50BDA /* LibPVRHelper.h */,
-				E8F98C6F161B163600B50BDA /* TexturePVR.cpp */,
+				E856CF21162420F10065E32B /* TextureDescriptor.cpp */,
+				E856CF22162420F10065E32B /* TextureDescriptor.h */,
 				FECFB40912E5904400C71562 /* Texture.cpp */,
 				FECFB40A12E5904400C71562 /* Texture.h */,
 				FECFB40B12E5904400C71562 /* TextureDX9.cpp */,
@@ -1720,6 +1763,8 @@
 		FECFB41812E5904400C71562 /* Scene3D */ = {
 			isa = PBXGroup;
 			children = (
+				E8C6B12316692EF7001EBE09 /* ParticleEffectNode.cpp */,
+				E8C6B12416692EF7001EBE09 /* ParticleEffectNode.h */,
 				CCFF223415EE15B100363446 /* SwitchNode.cpp */,
 				CCFF223515EE15B100363446 /* SwitchNode.h */,
 				C22651F315E3D7A900E25BF4 /* ReferenceNode.cpp */,
@@ -2217,6 +2262,15 @@
 				C2F0A4FE161DEA8C003A2006 /* Observer.h in Headers */,
 				E8F98C85161B301E00B50BDA /* LibPVRHelper.h in Headers */,
 				E8F98C87161B326200B50BDA /* PVRDefines.h in Headers */,
+				E856CF24162420F10065E32B /* TextureDescriptor.h in Headers */,
+				E80842B6163913B7002A6A77 /* ImageLoader.h in Headers */,
+				E89ECC971663AA2700D17C41 /* FastName.h in Headers */,
+				E89ECC981663AA2700D17C41 /* FastNameMap.h in Headers */,
+				E89ECC991663AA2700D17C41 /* Hash.h in Headers */,
+				E89ECC9A1663AA2700D17C41 /* Introspection.h in Headers */,
+				E89ECC9B1663AA2700D17C41 /* Meta.h in Headers */,
+				E8C6B12616692EF7001EBE09 /* ParticleEffectNode.h in Headers */,
+				49E7A1E816835EC400F63EFE /* LibDxtHelper.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2529,14 +2583,18 @@
 				5C5EAC1315A582F200279915 /* XMLParser.cpp in Sources */,
 				5C8E673B15A58D0400A87103 /* FileSystemObjective.mm in Sources */,
 				5C44738B15B5A1C500028948 /* FixedSizePoolAllocator.cpp in Sources */,
-				5C44738D15B5A1C500028948 /* HashMap.cpp in Sources */,
 				5CBF71DF15C6E46100CD1736 /* RenderOptions.cpp in Sources */,
 				C22651F515E3D7A900E25BF4 /* ReferenceNode.cpp in Sources */,
 				CCFF223615EE15B100363446 /* SwitchNode.cpp in Sources */,
 				E85D7A6B1609E37F00F3EBBE /* ParticleLayerLong.cpp in Sources */,
 				C2F0A4FC161DEA8C003A2006 /* Observable.cpp in Sources */,
-				E8F98C70161B163600B50BDA /* TexturePVR.cpp in Sources */,
 				E8F98C84161B301E00B50BDA /* LibPVRHelper.cpp in Sources */,
+				E856CF23162420F10065E32B /* TextureDescriptor.cpp in Sources */,
+				E80842B5163913B7002A6A77 /* ImageLoader.cpp in Sources */,
+				492A98DC1644149F006AAE2A /* Image.mm in Sources */,
+				E89ECC961663AA2700D17C41 /* FastName.cpp in Sources */,
+				E8C6B12516692EF7001EBE09 /* ParticleEffectNode.cpp in Sources */,
+				49E7A1E716835EC400F63EFE /* LibDxtHelper.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2569,6 +2627,12 @@
 				GCC_WARN_MISSING_PARENTHESES = NO;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = NO;
 				GCC_WARN_PEDANTIC = NO;
+				HEADER_SEARCH_PATHS = (
+					./../../Sources/Internal,
+					./../../Sources/External,
+					./../../Libs/freetype/include,
+					./../../Libs/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../Libs/freetype/lib\"",
@@ -2596,6 +2660,12 @@
 				GCC_WARN_MISSING_PARENTHESES = NO;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = NO;
 				GCC_WARN_PEDANTIC = NO;
+				HEADER_SEARCH_PATHS = (
+					./../../Sources/Internal,
+					./../../Sources/External,
+					./../../Libs/freetype/include,
+					./../../Libs/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../Libs/freetype/lib\"",
@@ -2646,7 +2716,7 @@
 				);
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				VALID_ARCHS = "armv6 armv7 i386";
+				VALID_ARCHS = "armv7 armv7s i386";
 				WARNING_CFLAGS = "";
 			};
 			name = Debug;
@@ -2689,7 +2759,7 @@
 				);
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				VALID_ARCHS = "armv6 armv7 i386";
+				VALID_ARCHS = "armv7 armv7s i386";
 				WARNING_CFLAGS = "";
 			};
 			name = Release;
@@ -2732,7 +2802,7 @@
 				);
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				VALID_ARCHS = "armv6 armv7 i386";
+				VALID_ARCHS = "armv7 armv7s i386";
 				WARNING_CFLAGS = "";
 			};
 			name = AdHoc;
@@ -2753,6 +2823,12 @@
 				GCC_WARN_MISSING_PARENTHESES = NO;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = NO;
 				GCC_WARN_PEDANTIC = NO;
+				HEADER_SEARCH_PATHS = (
+					./../../Sources/Internal,
+					./../../Sources/External,
+					./../../Libs/freetype/include,
+					./../../Libs/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../Libs/freetype/lib\"",
@@ -2802,7 +2878,7 @@
 				);
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				VALID_ARCHS = "armv6 armv7 i386";
+				VALID_ARCHS = "armv7 armv7s i386";
 				WARNING_CFLAGS = "";
 			};
 			name = Distribution;
@@ -2823,6 +2899,12 @@
 				GCC_WARN_MISSING_PARENTHESES = NO;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = NO;
 				GCC_WARN_PEDANTIC = NO;
+				HEADER_SEARCH_PATHS = (
+					./../../Sources/Internal,
+					./../../Sources/External,
+					./../../Libs/freetype/include,
+					./../../Libs/include,
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../Libs/freetype/lib\"",

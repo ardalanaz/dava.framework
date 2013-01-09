@@ -3,9 +3,9 @@
 #include "HeightmapNode.h"
 #include "EditorSettings.h"
 #include "../EditorScene.h"
-#include "ErrorNotifier.h"
 #include "EditorBodyControl.h"
 
+#include "../Qt/Main/QtUtils.h"
 
 LandscapeEditorBase::LandscapeEditorBase(LandscapeEditorDelegate *newDelegate, EditorBodyControl *parentControl)
     :   delegate(newDelegate)
@@ -38,7 +38,7 @@ LandscapeEditorBase::LandscapeEditorBase(LandscapeEditorDelegate *newDelegate, E
     landscapeSize = 0;
 
 	cursorTexture = Texture::CreateFromFile("~res:/LandscapeEditor/Tools/cursor/cursor.png");
-	cursorTexture->SetWrapMode(Texture::WRAP_CLAMP, Texture::WRAP_CLAMP);
+	cursorTexture->SetWrapMode(Texture::WRAP_CLAMP_TO_EDGE, Texture::WRAP_CLAMP_TO_EDGE);
     
     savedShaderMode = LandscapeNode::TILED_MODE_MIXED;
 }
@@ -74,7 +74,7 @@ bool LandscapeEditorBase::SetScene(EditorScene *newScene)
     workingLandscape = SafeRetain(newScene->GetLandScape(newScene));
     if(!workingLandscape)
     {
-        ErrorNotifier::Instance()->ShowError("No landscape at level.");
+        ShowErrorDialog(String("No landscape at level."));
         return false;
     }
     
@@ -191,7 +191,7 @@ bool LandscapeEditorBase::Input(DAVA::UIEvent *touch)
     {
         if(UIEvent::BUTTON_1 == touch->tid)
         {
-            inverseDrawingEnabled = InputSystem::Instance()->GetKeyboard()->IsKeyPressed(DVKEY_ALT);
+            inverseDrawingEnabled = IsKeyModificatorPressed(DVKEY_ALT);
             
             if(UIEvent::PHASE_BEGAN == touch->phase)
             {
@@ -228,12 +228,12 @@ bool LandscapeEditorBase::Input(DAVA::UIEvent *touch)
     
     if(UIEvent::PHASE_KEYCHAR == touch->phase)
     {
-        if(DVKEY_Z == touch->tid && InputSystem::Instance()->GetKeyboard()->IsKeyPressed(DVKEY_CTRL))
+        if(DVKEY_Z == touch->tid && IsKeyModificatorPressed(DVKEY_CTRL))
         {
             UndoAction();
             return true;
         }
-        if(DVKEY_Z == touch->tid && InputSystem::Instance()->GetKeyboard()->IsKeyPressed(DVKEY_SHIFT))
+        if(DVKEY_Z == touch->tid && IsKeyModificatorPressed(DVKEY_SHIFT))
         {
             RedoAction();
             return true;
@@ -249,7 +249,8 @@ void LandscapeEditorBase::SaveTexture()
     
     if(savedPath.length())
     {
-        SaveTextureAs(savedPath, true);
+        String pathToSave = FileSystem::Instance()->ReplaceExtension(savedPath, ".png");
+        SaveTextureAs(pathToSave, true);
     }
     else if(!fileSystemDialog->GetParent())
     {

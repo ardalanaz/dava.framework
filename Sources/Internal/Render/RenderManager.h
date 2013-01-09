@@ -69,7 +69,13 @@ public:
     struct Caps
 	{
         Core::eRenderer renderer;
-		bool            isHardwareCursorSupported;
+		bool isHardwareCursorSupported;
+        bool isPVRTCSupported;
+        bool isETCSupported;
+        bool isBGRA8888Supported;
+        bool isFloat16Supported;
+        bool isFloat32Supported;
+		bool isDXTSupported;
 	};
     
     struct Stats
@@ -99,7 +105,7 @@ public:
 	void Init(int32 _frameBufferWidth, int32 _frameBufferHeight);
 #ifdef __DAVAENGINE_ANDROID__    
 	void InitFBSize(int32 _frameBufferWidth, int32 _frameBufferHeight);
-#endif //    #ifdef __DAVASOUND_ANDROID__    
+#endif //    #ifdef __DAVAENGINE_ANDROID__    
 #else
 	void Init(int32 _frameBufferWidth, int32 _frameBufferHeight);
 	LPDIRECT3D9		  GetD3D();
@@ -492,8 +498,17 @@ public:
     
 #if defined(__DAVAENGINE_OPENGL__)
     void HWglBindBuffer(GLenum target, GLuint  	buffer);
-    GLuint bufferBindingId[2];    
-#endif
+    GLuint bufferBindingId[2];
+    
+    int32 HWglGetLastTextureID();
+    void HWglBindTexture(int32 tId);
+    int32 lastBindedTexture;
+
+    
+    int32 HWglGetLastFBO();
+    void HWglBindFBO(const int32 fbo);
+    int32 lastBindedFBO;
+#endif //#if defined(__DAVAENGINE_OPENGL__)
     
     void RequestGLScreenShot() { needGLScreenShot = true; };
 

@@ -34,11 +34,14 @@
 #include "Base/BaseObject.h"
 #include "Base/BaseMath.h"
 #include <stack>
+#include "FileSystem/File.h"
 
 namespace DAVA 
 {
 class YamlParser;
-
+class VariantType;
+class YamlNodeKeyValuePair;
+    
 /**
 	\defgroup yaml Yaml configs
  */
@@ -56,13 +59,21 @@ public:
 		TYPE_MAP,
 	};
 
+    // Predefined node name to store Relative Depth.
+    static const char8* YAML_NODE_RELATIVE_DEPTH_NAME;
+
 	YamlNode(eType type);
 	virtual ~YamlNode();
 	
 	void Print(int32 identation);
+    void PrintToFile(DAVA::File* file, uint32 identationDepth = 0);
 	
 	bool			AsBool();
-	int32			AsInt();
+	int32			AsInt();//left for old code
+    int32			AsInt32();
+    uint32			AsUInt32();
+    int64			AsInt64();
+    uint64			AsUInt64();
 	float32			AsFloat();
 	const String &	AsString();
 	const WideString & AsWString();
@@ -76,22 +87,56 @@ public:
 	Vector2			AsPoint();//Dizz: this one exists cause of Boroda
 	Vector2			AsVector2();
 	Vector3			AsVector3();
+  	Vector4			AsVector4();
 	Rect			AsRect();	
+    VariantType     AsVariantType();
 	
 	YamlNode *		Get(const String & name);
 	YamlNode *		Get(int32 index); 
 	const String &	GetItemKeyName(int32 index); 
 	
+    // Setters.
+    void            Set(const String& name, bool value);
+    void            Set(const String& name, int32 value);
+    void            Set(const String& name, float32 value);
+    void            Set(const String& name, const char8* value);
+    void            Set(const String& name, const String& value);
+    void            Set(const String& name, VariantType* varType);
+
+    // Setters for Map/Array nodes.
+    void            AddNodeToMap(const String& name, YamlNode* node);
+    void            AddNodeToArray(YamlNode* node);
+
+    // Add the values to the current node of type Array.
+    void            AddValueToArray(int32 value);
+    void            AddValueToArray(float32 value);
+    void            AddValueToArray(const String& value);
+    void            AddValueToArray(VariantType* value);
+    
+    // Remove node value from map
+    void            RemoveNodeFromMap(const String & name);
+    
 	eType			GetType() { return type; }
 	int32			GetCount();
-	
+
+    void            InitFromKeyedArchive(KeyedArchive* archive);
+    void            InitFromVariantType(VariantType* varType);
+    
+protected:
+    void            FillContentAccordingToVariantTypeValue(VariantType* varType);
+    void            ProcessMatrix(const float32* array,uint32 dimension);
+    void            ProcessVector(const float32 array[],uint32 dimension);
+    bool            IsContainingMap();
+    String          FloatToCuttedString(float f);
+    
 private:
+    
 	int						mapIndex;
 	int						mapCount;
-	eType					 type;
+	eType					type;
 	WideString				stringValue;
-	String					 nwStringValue;
-	Vector<YamlNode*>		 objectArray;
+	String					nwStringValue;
+	Vector<YamlNode*>		objectArray;
 	Map<String, YamlNode*>	objectMap;	
 
 	friend class YamlParser;
@@ -109,8 +154,15 @@ protected:
 	bool Parse(const String & fileName);
 	
 public:
+    // This method just creates the YAML parser.
+    static YamlParser   * Create();
+    
+    // This method creates the parser and parses the input file.
 	static YamlParser	* Create(const String & fileName);
 	
+    // Save to YAML file.
+	bool SaveToYamlFile(const String& fileName, YamlNode * rootNode, bool skipRootNode, uint32 attr = File::CREATE | File::WRITE);
+    
 	YamlNode			* GetRootNode();
 	
 	struct YamlDataHolder
@@ -122,6 +174,20 @@ public:
 
 private:
 	YamlNode			* GetNodeByPath(const String & path);
+	bool                SaveNodeRecursive(File* fileToSave, const String& nodeName, YamlNode* currentNode, int16 depth);
+
+    // Order the YAML node with type "Map" according to the depth.
+    Vector<YamlNodeKeyValuePair> OrderMapYamlNode(const Map<String, YamlNode*>& mapNodes);
+
+    // Write different Yaml node types to the file.
+    bool WriteScalarNodeToYamlFile(File* fileToSave, const String& nodeName, const String& nodeValue, int16 depth);
+    bool WriteArrayNodeToYamlFile(File* fileToSave, const String& nodeName,
+                                  YamlNode* currentNode, int16 depth);
+    bool WriteMapNodeToYamlFile(File* fileToSave, const String& mapNodeName, int16 depth);
+    bool WriteStringToYamlFile(File* fileToSave, const String& stringToWrite);
+
+    // Return the identation string of the appropriate depth.
+    String PrepareIdentedString(int16 depth);
 	
 	YamlNode			* rootObject;
 	String				lastMapKey;

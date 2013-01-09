@@ -29,6 +29,9 @@
  =====================================================================================*/
 
 #include "UI/TheoraPlayer.h"
+
+#if !defined(__DAVAENGINE_ANDROID__)
+
 #include <theora/theoradec.h>
 
 namespace DAVA
@@ -51,7 +54,7 @@ struct TheoraData
     TheoraData() : thSetup(nullptr), thCtx(nullptr), videoBufGranulePos(-1) {}
 };
     
-TheoraPlayer::TheoraPlayer(const String & filePath) :
+TheoraPlayer::TheoraPlayer(const String & _filePath) :
     theoraData(nullptr),
     isPlaying(false),
     theora_p(0),
@@ -66,13 +69,14 @@ TheoraPlayer::TheoraPlayer(const String & filePath) :
     frameBufferW(0)
 {
     theoraData = new TheoraData();
-    SetClipContents(true);
-    OpenFile(filePath); // will init other variables
+
+    filePath = _filePath;
+    OpenFile(filePath);
 }
 
 TheoraPlayer::~TheoraPlayer()
 {
-    CloseFile();
+    ReleaseData();
     SafeDelete(theoraData);
 }
 
@@ -84,7 +88,7 @@ int32 TheoraPlayer::BufferData()
     return bytes;
 }
 
-void TheoraPlayer::CloseFile()
+void TheoraPlayer::ReleaseData()
 {
     if(theoraData)
     {
@@ -102,16 +106,18 @@ void TheoraPlayer::CloseFile()
     videoTime = 0;
     SafeRelease(file);
     SafeDeleteArray(frameBuffer);
+    isPlaying = false;
 }
 
 void TheoraPlayer::OpenFile(const String &path)
 {
+    ReleaseData();
+
     if(path.empty())
         return;
     
     filePath = path;
     
-    // where/how is it used? position change?
     file = File::Create(path, File::OPEN | File::READ);
     DVASSERT(file);
 
@@ -224,6 +230,8 @@ void TheoraPlayer::OpenFile(const String &path)
     repeatFilePos = file->GetPos();
     
     frameTime = float32(theoraData->thInfo.fps_denominator) / float32(theoraData->thInfo.fps_numerator);
+    
+    isPlaying = true;
 }
 
 void TheoraPlayer::SetPlaying(bool _isPlaying)
@@ -282,7 +290,7 @@ void TheoraPlayer::Update(float32 timeElapsed)
 
             if(th_decode_packetin(theoraData->thCtx, &theoraData->packet, &theoraData->videoBufGranulePos) == 0)
             {
-                if((videoBufTime = (float32)th_granule_time(theoraData->thCtx, theoraData->videoBufGranulePos)) >= videoTime)
+                if((videoBufTime = th_granule_time(theoraData->thCtx, theoraData->videoBufGranulePos)) >= videoTime)
                     isVideoBufReady = true;
                 else
                     pp_inc = (pp_level > 0)? -1 : 0;
@@ -309,15 +317,20 @@ void TheoraPlayer::Update(float32 timeElapsed)
     
         for(int i = 0; i < frameBufferH; i++) //Y
         {
-            // TODO: optimize by checking 'i' dependent condition as earlier as possible
-            const int yShift = theoraData->yuvBuffer[0].stride * i;
-            const int uShift = theoraData->yuvBuffer[1].stride * (i / 2);
-            const int vShift = theoraData->yuvBuffer[2].stride * (i / 2);
+            int yShift = 0, uShift = 0, vShift = 0;
+            const bool inBuffer = (i <= theoraData->yuvBuffer[0].height);
+            if(inBuffer)
+            {
+                yShift = theoraData->yuvBuffer[0].stride * i;
+                uShift = theoraData->yuvBuffer[1].stride * (i / 2);
+                vShift = theoraData->yuvBuffer[2].stride * (i / 2);
+            }
+            
             for(int j = 0; j < frameBufferW; j++) //X
             {
                 const int index = (i * frameBufferW + j) * 4;
                 
-                if(i <= theoraData->yuvBuffer[0].height && j <= theoraData->yuvBuffer[0].width)
+                if(inBuffer && j <= theoraData->yuvBuffer[0].width)
                 {
                     const unsigned char Y = *(theoraData->yuvBuffer[0].data + yShift + j);
                     const unsigned char U = *(theoraData->yuvBuffer[1].data + uShift + j / 2);
@@ -337,8 +350,8 @@ void TheoraPlayer::Update(float32 timeElapsed)
     
         if(!ret)
         {
-            Texture * tex = Texture::CreateFromData(FORMAT_RGBA8888, frameBuffer, frameBufferW, frameBufferH);
-            Sprite * spr = Sprite::CreateFromTexture(tex, 0, 0, (float32)tex->width, (float32)tex->height);
+            Texture * tex = Texture::CreateFromData(FORMAT_RGBA8888, frameBuffer, frameBufferW, frameBufferH, false);
+            Sprite * spr = Sprite::CreateFromTexture(tex, 0, 0, tex->width, tex->height);
             spr->ConvertToVirtualSize();
 
             SafeRelease(tex);
@@ -363,17 +376,17 @@ void TheoraPlayer::Update(float32 timeElapsed)
 
     if(isRepeat && file->GetPos() == file->GetSize())
     {
-        CloseFile();
+        ReleaseData();
         OpenFile(filePath);
     }
 }
 
 unsigned char TheoraPlayer::ClampFloatToByte(const float &value)
 {
-    unsigned char result = (unsigned char)value;
+    char result = (char)value;
     
-    (value < 0.f) ? result = 0 : NULL;
-    (value > 255.f) ? result = 255 : NULL;
+    (value < 0) ? result = 0 : NULL;
+    (value > 255) ? result = 255 : NULL;
     
     return (unsigned char)result;
 }
@@ -400,9 +413,9 @@ void TheoraPlayer::LoadFromYamlNode(YamlNode * node, UIYamlLoader * loader)
     {
         Rect rect = rectNode->AsRect();
         if(rect.dx == -1)
-            rect.dx = (float32)theoraData->thInfo.pic_width;
+            rect.dx = theoraData->thInfo.pic_width;
         if(rect.dy == -1)
-            rect.dy = (float32)theoraData->thInfo.pic_height;
+            rect.dy = theoraData->thInfo.pic_height;
         
         SetRect(rect);
     }
@@ -417,3 +430,4 @@ void TheoraPlayer::Draw(const UIGeometricData &geometricData)
     }
 }
 }
+#endif //#if !defined(__DAVAENGINE_ANDROID__)

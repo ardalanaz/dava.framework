@@ -39,7 +39,8 @@ RulerToolLandscape::RulerToolLandscape()
 {
     SetName(String("Landscape_RulerTool"));
 
-    rulerSprite = Sprite::CreateAsRenderTarget(TEXTURE_TILE_FULL_SIZE, TEXTURE_TILE_FULL_SIZE, DAVA::FORMAT_RGBA8888);
+    rulerSprite = Sprite::CreateAsRenderTarget((float32)TEXTURE_TILE_FULL_SIZE, (float32)TEXTURE_TILE_FULL_SIZE, DAVA::FORMAT_RGBA8888);
+//    rulerSprite->GetTexture()->GenerateMipmaps();
 }
 
 RulerToolLandscape::~RulerToolLandscape()
@@ -116,4 +117,9 @@ void RulerToolLandscape::SetPoints(const DAVA::List<DAVA::Vector3> &points)
 void RulerToolLandscape::SetDisplayedTexture()
 {
     SetTexture(LandscapeNode::TEXTURE_TILE_FULL, rulerSprite->GetTexture());
+}
+
+Texture * RulerToolLandscape::GetDisplayedTexture()
+{
+    return rulerSprite->GetTexture();
 }

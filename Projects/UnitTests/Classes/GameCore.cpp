@@ -41,7 +41,9 @@
 #include "SoundTest.h"
 #include "SplitTest.h"
 #include "PVRTest.h"
-
+#include "DXTTest.h"
+#include "KeyedArchiveYamlTest.h"
+#include "CloneTest.h"
 
 using namespace DAVA;
 
@@ -67,13 +69,15 @@ void GameCore::OnAppStarted()
 
     CreateDocumentsFolder();
 
+    new CloneTest();
     new PVRTest();
-//	new SampleTest();
+	new DXTTest();
 	new EntityTest();	
 	new MemoryAllocatorsTest();
 	new HashMapTest();
 	new SoundTest();
 	new SplitTest();
+    new KeyedArchiveYamlTest();
     
     errors.reserve(TestCount());
 
@@ -260,7 +264,6 @@ void GameCore::FlushTestResults()
 //    dbClient->DropDatabase();
 //    //end of test
     
-    
     time_t logStartTime = time(0);
     String testTimeString = Format("%lld", logStartTime);
 
@@ -316,10 +319,12 @@ void GameCore::RegisterError(const String &command, const String &fileName, int3
         if(testData)
         {
             newError->testName = testData->name;
+            newError->testMessage = testData->message;
         }
         else
         {
             newError->testName = String("");
+            newError->testMessage = String("");
         }
         
         errors.push_back(newError);
@@ -374,9 +379,14 @@ MongodbObject * GameCore::CreateLogObject(const String &logName, const String &r
                 String errorString = String(Format("command: %s at file: %s at line: %d",
                                                    error->command.c_str(), error->filename.c_str(), error->line));
                 
-                if(0 < error->testName.length())
+                if(!error->testName.empty())
                 {
                     errorString += String(Format(", test: %s", error->testName.c_str()));
+                }
+                
+                if(!error->testMessage.empty())
+                {
+                    errorString += String(Format(", message: %s", error->testMessage.c_str()));
                 }
                 
                 

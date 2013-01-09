@@ -34,6 +34,9 @@
 #include "Base/Singleton.h"
 #include "FileSystem/File.h"
 
+#if defined (__DAVAENGINE_ANDROID__)
+#include "FileSystem/APKFile.h"
+#endif //__DAVAENGINE_ANDROID__
 /**
 	\defgroup filesystem File System
  */
@@ -115,58 +118,64 @@ public:
 	virtual bool SetCurrentWorkingDirectory(const String & newWorkingDirectory);
 	
 	/**
-	         \brief Function to retrieve current documents directory
-         \returns current documents directory
-         */
-        virtual const String & GetCurrentDocumentsDirectory();
-        
-        /**
+        \brief Function to retrieve current documents directory
+        \returns current documents directory
+     */
+    virtual const String & GetCurrentDocumentsDirectory();
+    
+    /**
          \brief Function to set current documents directory
          \param[in] newDocDirectory new documents directory to be set
-         */
-        virtual void SetCurrentDocumentsDirectory(const String & newDocDirectory);
-        
-        /**
+     */
+    virtual void SetCurrentDocumentsDirectory(const String & newDocDirectory);
+    
+    /**
          \brief Function to set current documents directory to default
-         */
-        virtual void SetDefaultDocumentsDirectory();
-        
-        /**
+     */
+    virtual void SetDefaultDocumentsDirectory();
+    
+    /**
          \brief Function to retrieve full path relative current documents folder
          \returns path relative corrent documents folder
-         */
-        virtual const String FilepathInDocuments(const char * relativePathname);
-        
-        /**
+     */
+    virtual const String FilepathInDocuments(const char * relativePathname);
+    
+    /**
          \brief Function to retrieve full path relative current documents folder
          \returns path relative corrent documents folder
-         */
-        virtual const String FilepathInDocuments(const String & relativePathname);
-        
-        /**
+     */
+    virtual const String FilepathInDocuments(const String & relativePathname);
+    
+    /**
          \brief Function to retrieve user's documents path
          \returns user's documents path
-         */
-        virtual const String GetUserDocumentsPath();
-        
-        /**
+     */
+    virtual const String GetUserDocumentsPath();
+    
+    /**
          \brief Function to retrieve public documents path
          \returns public documents path
-         */
-        virtual const String GetPublicDocumentsPath();
+     */
+    virtual const String GetPublicDocumentsPath();
 
 #if defined(__DAVAENGINE_MACOS__) || defined(__DAVAENGINE_IPHONE__)  
-        /**
+    /**
         \brief Function to retrieve user’s home path
         \returns user’s home path
-        */
-        virtual const String GetHomePath();
+    */
+    virtual const String GetHomePath();
 #endif
     
 	/**
-		\brief Function to compute CRC32 
+		\brief Function check if specified path is a regular file
+	*/
+	virtual bool IsFile(const String & pathToCheck);
+
+		
+	/**
+		\brief Function check if specified path is a directory
 	 */
-    virtual bool IsDirectory(const String & pathToCheck);
+	virtual bool IsDirectory(const String & pathToCheck);
 		
 	/**
 		\brief Return canonical path name of \a path.
@@ -179,18 +188,16 @@ public:
 	 */
 	static String RealPath(const String & path);
 
-    /**
+	/**
      \brief Return canonical path name of \a path.
      
-     NormalizePath expands all symbolic links and resolves references to '/./', '/../' and extra '/' characters in
+     GetCanonicalPath expands all symbolic links and resolves references to '/./', '/../' and extra '/' characters in
      the string named by path and returns the canonicalized absolute pathname.
      The resulting path will have no symbolic link, '/./' or '/../' components, also no trailing ones.
      Nor will it  end on a slash: if the result is the root then the returned path is empty,
-     and unless the result is empty, it will always start with a slash.
+     and unless the result is empty, it will always start with a slash. It also removes disk letter from path.
 	 */
-	static String NormalizePath(const String & path);
-
-    
+    static String GetCanonicalPath(const String & path);
     
     
 	/**
@@ -230,6 +237,14 @@ public:
 		\returns true if file was successfully copied, false otherwise
 	*/
 	virtual bool CopyFile(const String & existingFile, const String & newFile);
+
+	/**
+		\brief Moves an existing file to a new file.
+		\param[in] existingFile The name of an existing file.
+		\param[out] newFile The name of the new file.
+		\returns true if file was successfully moved, false otherwise
+	*/
+	virtual bool MoveFile(const String & existingFile, const String & newFile);
 
 	/**
 		\brief Copies directory to another existing directory.
@@ -279,6 +294,19 @@ public:
 
 private:
     
+    /**
+     \brief Return canonical path name of \a path.
+     
+     NormalizePath expands all symbolic links and resolves references to '/./', '/../' and extra '/' characters in
+     the string named by path and returns the canonicalized absolute pathname.
+     The resulting path will have no symbolic link, '/./' or '/../' components, also no trailing ones.
+     Nor will it  end on a slash: if the result is the root then the returned path is empty,
+     and unless the result is empty, it will always start with a slash.
+	 */
+	static String NormalizePath(const String & path);
+	virtual eCreateDirectoryResult CreateExactDirectory(const String & filePath);
+
+    
     String tempRetPath;
 	String currentWorkingDirectory;
         String currentDocDirectory;
@@ -292,26 +320,14 @@ private:
 	List<ResourceArchiveItem> resourceArchiveList;
 
 	friend class File;
+#if defined(__DAVAENGINE_ANDROID__)
+	friend class APKFile;
+#endif //#if defined(__DAVAENGINE_ANDROID__)
 
     static String virtualBundlePath;
 
     static const char * FilepathRelativeToBundle(const char * relativePathname);
     static const char * FilepathRelativeToBundle(const String & relativePathname);
-
-#if defined(__DAVAENGINE_ANDROID__)
-private:	
-	enum eConst
-	{
-		MAX_PATH = 260
-	};
-	char8 assetsPath[MAX_PATH];
-	char8 documentsPath[MAX_PATH];
-	zip *APKArchive;
-public:
-	void SetPath(const char8 *docPath, const char8 *assets);
-
-#endif //#if defined(__DAVAENGINE_ANDROID__)
-	
 };
 	
 };

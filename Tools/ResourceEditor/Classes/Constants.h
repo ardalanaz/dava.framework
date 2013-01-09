@@ -4,15 +4,6 @@
 namespace ResourceEditor 
 {
 
-enum eExportFormat
-{
-    FORMAT_PNG = 0,
-    FORMAT_PVR,
-    FORMAT_DXT,
-    
-    FORMAT_COUNT
-};
-    
 enum eNodeType
 {
     NODE_LANDSCAPE  = 0,
@@ -25,6 +16,7 @@ enum eNodeType
     NODE_PARTICLE_EMITTER,
     NODE_USER_NODE,
 	NODE_SWITCH_NODE,
+	NODE_PARTICLE_EFFECT,
     
     NODE_COUNT
 };
@@ -50,6 +42,9 @@ enum eHideableWidgets
 	HIDABLEWIDGET_REFERENCES,
     
     HIDABLEWIDGET_TOOLBAR,
+    
+    HIDABLEWIDGET_CUSTOMCOLORS,
+	HIDEBLEWIDGET_VISIBILITYCHECKTOOL,
     
     HIDABLEWIDGET_COUNT
 };

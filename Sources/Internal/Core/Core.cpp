@@ -66,6 +66,8 @@ namespace DAVA
 	float Core::physicalToVirtual = 0;
 	Vector2 Core::drawOffset;
 
+	static ApplicationCore * core = 0;
+
 Core::Core()
 {
 	globalFrameIndex = 1;
@@ -79,6 +81,8 @@ Core::Core()
 
 Core::~Core()
 {
+	SafeRelease(options);
+	SafeRelease(core);
 }
 
 
@@ -96,7 +100,7 @@ void Core::CreateSingletons()
     
 	new FileSystem();
 	FileSystem::Instance()->SetDefaultDocumentsDirectory();
-        FileSystem::Instance()->CreateDirectory(FileSystem::Instance()->GetCurrentDocumentsDirectory(), true);
+    FileSystem::Instance()->CreateDirectory(FileSystem::Instance()->GetCurrentDocumentsDirectory(), true);
 
 	
 	new Logger();
@@ -132,9 +136,10 @@ void Core::CreateSingletons()
     new AutotestingSystem();
 #endif
 
-#ifdef __DAVAENGINE_WIN32__
+#if defined(__DAVAENGINE_WIN32__)
 	Thread::InitMainThread();
 #endif
+    
     
     CheckDataTypeSizes();
 }
@@ -160,7 +165,6 @@ void Core::ReleaseSingletons()
 	Accelerometer::Instance()->Release();
 	//SoundSystem::Instance()->Release();
 #endif //#if defined(__DAVAENGINE_IPHONE__) || defined(__DAVAENGINE_ANDROID__)
-	//RenderManager::Instance()->Release();
 	LocalizationSystem::Instance()->Release();
 	Logger::Debug("[Core::Release] successfull");
 	FileSystem::Instance()->Release();
@@ -170,6 +174,9 @@ void Core::ReleaseSingletons()
 #ifdef __DAVAENGINE_AUTOTESTING__
     AutotestingSystem::Instance()->Release();
 #endif
+
+	InputSystem::Instance()->Release();
+	Logger::Instance()->Release();
 }
 
 void Core::SetOptions(KeyedArchive * archiveOfOptions)
@@ -315,7 +322,7 @@ void Core::CalculateScaleMultipliers()
         TextBlock::ScreenResolutionChanged();
     }
 			
-	Logger::Debug("[Core] CalculateScaleMultipliers desirableIndex: %d", desirableIndex);
+//	Logger::Debug("[Core] CalculateScaleMultipliers desirableIndex: %d", desirableIndex);
 		
 }
 	
@@ -353,7 +360,7 @@ const Vector2 &Core::GetPhysicalDrawOffset()
 
 void Core::SetPhysicalScreenSize(int32 width, int32 height)
 {
-	Logger::Info("Setting physical screen size to %dx%d", width, height);
+//	Logger::Info("Setting physical screen size to %dx%d", width, height);
 	screenWidth = (float32)width;
 	screenHeight = (float32)height;
 	needTorecalculateMultipliers = true;
@@ -546,9 +553,6 @@ void Core::Quit()
 	Logger::Debug("[Core::Quit] do not supported by platform implementation of core");
 }
 	
-	
-static ApplicationCore * core = 0;
-
 void Core::SetApplicationCore(ApplicationCore * _core)
 {
 	core = _core;
@@ -651,12 +655,21 @@ void Core::SystemProcessFrame()
 }
 
 	
-void Core::GoBackground()
+void Core::GoBackground(bool isLock)
 {
 #if defined (__DAVAENGINE_IPHONE__) || defined (__DAVAENGINE_ANDROID__) 
 	if (core)
-		core->OnBackground();
-#endif //#if defined (__DAVAENGINE_IPHONE__) || defined (__DAVAENGINE_ANDROID__) 
+    {
+        if(isLock)
+        {
+            core->OnDeviceLocked();
+        }
+        else
+        {
+            core->OnBackground();
+        }
+    }
+#endif //#if defined (__DAVAENGINE_IPHONE__) || defined (__DAVAENGINE_ANDROID__)
 }
 
 uint32 Core::GetGlobalFrameIndex()

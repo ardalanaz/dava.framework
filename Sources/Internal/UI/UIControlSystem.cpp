@@ -440,7 +440,7 @@ void UIControlSystem::OnInput(int32 touchType, const Vector<UIEvent> &activeInpu
 		}
 		
 		//removes inactive touches and cancelled touches
-		for (Vector<UIEvent>::iterator it = totalInputs.begin(); it != totalInputs.end(); it++) 
+		for (Vector<UIEvent>::iterator it = totalInputs.begin(); it != totalInputs.end();)
 		{
 			if((*it).activeState == UIEvent::ACTIVITY_STATE_INACTIVE || (*it).phase == UIEvent::PHASE_CANCELLED)
 			{
@@ -451,11 +451,13 @@ void UIControlSystem::OnInput(int32 touchType, const Vector<UIEvent> &activeInpu
 				{
 					break;
 				}
+                continue;
 			}
+            it++;
 		}
 		
 //		Logger::Debug("Total touches %d", totalInputs.size());
-//		for (Vector<UIEvent>::iterator it = totalInputs.begin(); it != totalInputs.end(); it++) 
+//		for (Vector<UIEvent>::iterator it = totalInputs.begin(); it != totalInputs.end(); it++)
 //		{
 //			Logger::Debug("		ID %d", (*it).tid);
 //			Logger::Debug("		phase %d", (*it).phase);
@@ -488,6 +490,10 @@ void UIControlSystem::CancelInput(UIEvent *touch)
 	{
 		touch->touchLocker->SystemInputCancelled(touch);
 		touch->touchLocker = NULL;
+	}
+	if (touch->touchLocker != currentScreen)
+	{
+		currentScreen->SystemInputCancelled(touch);
 	}
 }
 void UIControlSystem::CancelAllInputs()

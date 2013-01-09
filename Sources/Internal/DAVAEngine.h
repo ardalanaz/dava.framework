@@ -107,8 +107,10 @@
 
 // 2D Graphics
 #include "Render/2D/Sprite.h"
+#include "Render/TextureDescriptor.h"
 #include "Render/Texture.h"
 #include "Render/Image.h"
+#include "Render/ImageLoader.h"
 #include "Render/Shader.h"
 
 #include "Core/DisplayMode.h"
@@ -120,6 +122,9 @@
 #include "Render/RenderHelper.h"
 
 #include "Render/Cursor.h"
+
+#include "Render/LibDxtHelper.h"
+
 
 // Fonts
 #include "Render/2D/Font.h"
@@ -182,6 +187,7 @@
 #include "Particles/ParticleLayer.h"
 #include "Particles/Particle.h"
 #include "Particles/ParticleEmitterObject.h"
+#include "Particles/ParticleEmitter3D.h"
 #include "Particles/ParticleLayer3D.h"
 #include "Particles/ParticleLayerLong.h"
 
@@ -210,10 +216,11 @@
 #include "Scene3D/QuadTree.h"
 #include "Scene3D/ImposterNode.h"
 #include "Scene3D/ParticleEmitterNode.h"
+#include "Scene3D/ParticleEffectNode.h"
 #include "Scene3D/ReferenceNode.h"
 #include "Scene3D/SwitchNode.h"
 #include "Scene3D/Heightmap.h"
-
+#include "Scene3D/UserNode.h"
 
 // Application core 
 #include "Core/Core.h"

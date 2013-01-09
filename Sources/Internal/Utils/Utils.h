@@ -38,22 +38,6 @@
 
 namespace DAVA 
 {
-//const char * FilepathRelativeToBundle(const char * relativePathname);
-//const char * FilepathRelativeToBundle(const String & relativePathname);
-
-//const char * FilepathInDocuments(const char * relativePathname);
-//const char * FilepathInDocuments(const String & relativePathname);
-
-#if defined(__DAVAENGINE_OPENGL__)
-int32 GetSavedTextureID();
-void BindTexture(int32 tId);
-
-int32 GetSavedFBO();
-void BindFBO(const int32 fbo);
-#elif defined(__DAVAENGINE_DIRECTX9__)
-void BindFBO(int32 fbo);
-#endif 
-
 int read_handler(void *ext, unsigned char *buffer, size_t size, size_t *length);
 
 WideString WcharToWString(const wchar_t *s);
@@ -79,12 +63,12 @@ void ReplaceBundleName(const String &newBundlePath);
 	
     
 /**
- \brief Function to compare strings without letter case
+ \brief Function to compare strings case-insensitive
  \param[in] ext1 - first string 
  \param[in] ext2 - second string 
  \param[out] result of comparision 
  */
-int32 CompareStrings(const String &str1, const String &str2);
+int32 CompareCaseInsensitive(const String &str1, const String &str2);
 
 //implementation
 
@@ -113,6 +97,31 @@ inline String WStringToString(const WideString& s)
 	for (size_t i = 0; i < len; ++i)
 		temp[i] = (char)s[i];
 	return temp; 
+}
+
+// Truncate the file extension.
+inline String TruncateFileExtension(const String& fileName, const String& extension)
+{
+    String truncatedName = fileName;
+    
+    int truncatedStringLen = truncatedName.length() - extension.length();
+    bool endsWithExtension = false;
+    if (fileName.length() >= extension.length())
+    {
+        endsWithExtension = (truncatedName.compare(truncatedStringLen, extension.length(), extension) == 0);
+    }
+    
+    if (endsWithExtension)
+    {
+        truncatedName.resize(truncatedStringLen);
+    }
+    
+    return truncatedName;
+}
+
+inline String TruncateTxtFileExtension(const String& fileName)
+{
+    return TruncateFileExtension(fileName, ".txt");
 }
 
 };

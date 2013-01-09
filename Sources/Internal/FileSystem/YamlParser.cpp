@@ -34,10 +34,45 @@
 #include "yaml/yaml.h"
 #include "Utils/UTF8Utils.h"
 #include "FileSystem/FileSystem.h"
+#include "FileSystem/VariantType.h"
+#include "FileSystem/KeyedArchive.h"
 
 namespace DAVA 
 {
 
+const char8* YamlNode::YAML_NODE_RELATIVE_DEPTH_NAME = "##YAML_NODERELATIVE_DEPTH##";
+
+// Inner clsee used for sorting.
+class YamlNodeKeyValuePair
+{
+public:
+    YamlNodeKeyValuePair(const String& nodeName, YamlNode* value)
+    {
+        this->yamlNodeName = nodeName;
+        this->yamlNodeValue = value;
+    }
+    
+    String GetNodeName() const  {return this->yamlNodeName;};
+    YamlNode* GetNodeValue() const {return this->yamlNodeValue;};
+
+    bool operator < (const YamlNodeKeyValuePair& right) const
+    {
+        YamlNode* leftDepthNode = this->yamlNodeValue->Get(YamlNode::YAML_NODE_RELATIVE_DEPTH_NAME);
+        YamlNode* rightDepthNode = right.yamlNodeValue->Get(YamlNode::YAML_NODE_RELATIVE_DEPTH_NAME);
+        
+        if (!leftDepthNode || !rightDepthNode)
+        {
+            return false;
+        }
+        
+        return leftDepthNode->AsInt() < rightDepthNode->AsInt();
+    }
+
+private:
+    String yamlNodeName;
+    YamlNode* yamlNodeValue;
+};
+    
 YamlNode::YamlNode(eType _type)
 {
 	type = _type;
@@ -89,6 +124,65 @@ void YamlNode::Print(int32 identation)
 		printf("}");
 	}
 }
+
+void YamlNode::PrintToFile(DAVA::File* file, uint32 identationDepth)
+{
+    if (type == TYPE_STRING)
+    {
+        file->WriteNonTerminatedString(nwStringValue);
+    }
+    else if (type == TYPE_ARRAY)
+    {
+        //check if there are no maps inside
+        
+        bool isSimpleContent = true;
+        for (int32 k = 0; k < (int32)objectArray.size(); ++k)
+        {
+            if(objectArray[k]->IsContainingMap())
+            {
+                isSimpleContent = false;
+                break;
+            }
+        }
+        
+        if(isSimpleContent)
+        {
+              file->WriteNonTerminatedString("[");
+        }
+        
+        for (int32 k = 0; k < (int32)objectArray.size(); ++k)
+        {
+            objectArray[k]->PrintToFile(file, identationDepth);
+            if(k != ((int32)objectArray.size() - 1) && isSimpleContent )
+            {
+                file->WriteNonTerminatedString(", ");
+            }
+        }
+        if(isSimpleContent)
+        {
+            file->WriteNonTerminatedString("]");
+        }
+    }
+    else if (type == TYPE_MAP)
+    {
+    	const int32 IDENTATION_SPACES_COUNT = 4;
+    	int32 spacesCount = identationDepth * IDENTATION_SPACES_COUNT;
+  
+		char8* spacesBuffer = new char8[spacesCount];
+		memset(spacesBuffer, 0x20, spacesCount);
+ 		String spaces(spacesBuffer, spacesCount);
+		delete[] spacesBuffer;
+
+        file->WriteNonTerminatedString("\r\n" + spaces );
+        for (Map<String, YamlNode*>::iterator t = objectMap.begin(); t != objectMap.end(); ++t )
+        {
+
+            String strToFile( t->first + ": ");
+            file->WriteNonTerminatedString(strToFile);
+            t->second->PrintToFile(file, ++identationDepth);
+        }
+	}
+}
 	
 int32 YamlNode::GetCount()
 {
@@ -102,11 +196,37 @@ int32 YamlNode::GetCount()
 }
 int32  YamlNode::AsInt()
 {
+    return AsInt32();
+}
+
+int32 YamlNode::AsInt32()
+{
 	int32 ret;
 	sscanf(nwStringValue.c_str(), "%d", &ret);
 	return ret;
 }
 
+uint32 YamlNode::AsUInt32()
+{    
+    uint32 ret;
+    sscanf(nwStringValue.c_str(), "%u", &ret);
+    return ret;
+}
+    
+int64 YamlNode::AsInt64()
+{
+    int64 ret;
+    sscanf(nwStringValue.c_str(), "%lld", &ret);
+    return ret;
+}
+
+uint64 YamlNode::AsUInt64()
+{
+    uint64 ret;
+    sscanf(nwStringValue.c_str(), "%llu", &ret);
+    return ret;
+}
+    
 float32	YamlNode::AsFloat()
 {
 	float32 ret;
@@ -162,6 +282,30 @@ Vector3 YamlNode::AsVector3()
 	return result;        
 }
     
+Vector4 YamlNode::AsVector4()
+{
+    Vector4 result(0, 0, 0, 0);
+    if (type == TYPE_ARRAY)
+    {
+        YamlNode * x = Get(0);
+        if (x)
+            result.x = x->AsFloat();
+        
+        YamlNode * y = Get(1);
+        if (y)
+            result.y = y->AsFloat();
+        
+        YamlNode * z = Get(2);
+        if (z)
+            result.z = z->AsFloat();
+
+        YamlNode * w = Get(3);
+        if (w)
+            result.w = w->AsFloat();
+    }
+    return result;        
+}
+
 Vector2 YamlNode::AsVector2()
 {
 	return AsPoint();
@@ -182,6 +326,144 @@ Rect	YamlNode::AsRect()
 		if (dy)result.dy = dy->AsFloat();
 	}
 	return result;
+}
+
+VariantType YamlNode::AsVariantType()
+{
+    VariantType retValue;
+    
+    Map<String, YamlNode*> & mapFromNode = AsMap();
+        
+    for(Map<String, YamlNode*>::iterator it = mapFromNode.begin(); it != mapFromNode.end(); ++it)
+    {
+        String innerTypeName = it->first;
+        
+        if(innerTypeName == DAVA::VariantType::TYPENAME_BOOLEAN)
+        {
+            retValue.SetBool(it->second->AsBool());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_INT32)
+        {
+            retValue.SetInt32(it->second->AsInt32());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_UINT32)
+        {
+            retValue.SetUInt32(it->second->AsUInt32());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_INT64)
+        {
+            retValue.SetInt64(it->second->AsInt64());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_UINT64)
+        {
+            retValue.SetUInt64(it->second->AsUInt64());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_FLOAT)
+        {
+            retValue.SetFloat(it->second->AsFloat());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_STRING)
+        {
+            retValue.SetString(it->second->AsString());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_WIDESTRING)
+        {
+            retValue.SetWideString(it->second->AsWString());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_BYTE_ARRAY)
+        {
+            Vector<YamlNode*> byteArrayNoodes = it->second->AsVector();
+            int32 size = byteArrayNoodes.size();
+            uint8* innerArray = new uint8[size];
+            for (int32 i = 0; i < size; ++i )
+            {
+                int val = 0;
+                int retCode = sscanf(byteArrayNoodes[i]->AsString().c_str(), "%x", &val);
+                if(val > CHAR_MAX || retCode == 0)
+                {
+                    delete [] innerArray;
+                    return retValue;
+                }
+                innerArray[i] = static_cast<uint8>(val);
+            }
+            retValue.SetByteArray(innerArray, size);
+            delete [] innerArray;
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_KEYED_ARCHIVE)
+        {
+            KeyedArchive innerArch;
+            innerArch.LoadFromYamlNode(this);
+            retValue.SetKeyedArchive(&innerArch);
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_VECTOR2)
+        {
+            retValue.SetVector2(it->second->AsVector2());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_VECTOR3)
+        {
+            retValue.SetVector3(it->second->AsVector3());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_VECTOR4)
+        {
+            retValue.SetVector4(it->second->AsVector4());
+        }
+        if(innerTypeName == DAVA::VariantType::TYPENAME_MATRIX2)
+        {
+            YamlNode* firstRowNode  = it->second->Get(0);
+            YamlNode* secondRowNode = it->second->Get(1);
+            if(NULL == firstRowNode || NULL == secondRowNode )
+            {
+                return retValue;
+            }
+            Vector2 fRowVect = firstRowNode->AsVector2();
+            Vector2 sRowVect = secondRowNode->AsVector2();
+            retValue.SetMatrix2(Matrix2(fRowVect.x,fRowVect.y,sRowVect.x,sRowVect.y));
+        }
+        if(innerTypeName == VariantType::TYPENAME_MATRIX3)
+        {
+            YamlNode* firstRowNode  = it->second->Get(0);
+            YamlNode* secondRowNode = it->second->Get(1);
+            YamlNode* thirdRowNode  = it->second->Get(2);
+            
+            if(NULL == firstRowNode  ||
+               NULL == secondRowNode ||
+               NULL == thirdRowNode )
+            {
+                return retValue;
+            }
+            Vector3 fRowVect = firstRowNode ->AsVector3();
+            Vector3 sRowVect = secondRowNode->AsVector3();
+            Vector3 tRowVect = thirdRowNode ->AsVector3();
+            
+            retValue.SetMatrix3(Matrix3(fRowVect.x,fRowVect.y,fRowVect.z,
+                               sRowVect.x,sRowVect.y,sRowVect.z,
+                               tRowVect.x,tRowVect.y,tRowVect.z));
+        }
+        if(innerTypeName == VariantType::TYPENAME_MATRIX4)
+        {
+            YamlNode* firstRowNode  = it->second->Get(0);
+            YamlNode* secondRowNode = it->second->Get(1);
+            YamlNode* thirdRowNode  = it->second->Get(2);
+            YamlNode* fourthRowNode = it->second->Get(3);
+            
+            if(NULL == firstRowNode || NULL == secondRowNode ||
+               NULL == thirdRowNode || NULL == fourthRowNode)
+            {
+                return retValue;
+            }
+            Vector4 fRowVect  = firstRowNode ->AsVector4();
+            Vector4 sRowVect  = secondRowNode->AsVector4();
+            Vector4 tRowVect  = thirdRowNode ->AsVector4();
+            Vector4 foRowVect = fourthRowNode->AsVector4();
+            
+            retValue.SetMatrix4(Matrix4(fRowVect.x,fRowVect.y,fRowVect.z,fRowVect.w,
+                                        sRowVect.x,sRowVect.y,sRowVect.z,sRowVect.w,
+                                        tRowVect.x,tRowVect.y,tRowVect.z,tRowVect.w,
+                                        foRowVect.x,foRowVect.y,foRowVect.z,foRowVect.w));
+        }
+    }
+    
+    return retValue;
 }
 	
 Vector<YamlNode*> & YamlNode::AsVector()
@@ -243,8 +525,414 @@ YamlNode * YamlNode::Get(const String & name)
 	return 0;
 }
 
+void YamlNode::Set(const String& name, bool value)
+{
+    if (type == TYPE_MAP)
+    {
+        YamlNode* stringNode = new YamlNode(YamlNode::TYPE_STRING);
+        String strValue = (value == true) ? "true" : "false";
+        stringNode->Set(name, strValue);
+        objectMap[name] = stringNode;
+    }
+    else if (type == TYPE_STRING)
+    {
+        // Just initialize the value.
+        VariantType variantValue;
+        variantValue.SetBool(value);
+        FillContentAccordingToVariantTypeValue(&variantValue);
+    }
+}
 
-	
+void YamlNode::Set(const String& name, int32 value)
+{
+    if (type == TYPE_MAP)
+    {
+        // For Maps just add the new String node.
+        YamlNode* stringNode = new YamlNode(YamlNode::TYPE_STRING);
+        stringNode->Set(name, value);
+        objectMap[name] = stringNode;
+    }
+    else if (type == TYPE_STRING)
+    {
+        // Just initialize the value.
+        VariantType variantValue;
+        variantValue.SetInt32(value);
+        FillContentAccordingToVariantTypeValue(&variantValue);
+    }
+}
+
+void YamlNode::Set(const String& name, float32 value)
+{
+    if (type == TYPE_MAP)
+    {
+        // For Maps just add the new String node.
+        YamlNode* stringNode = new YamlNode(YamlNode::TYPE_STRING);
+        stringNode->Set(name, value);
+        objectMap[name] = stringNode;
+    }
+    else if (type == TYPE_STRING)
+    {
+        // Just initialize the value.
+        VariantType variantValue;
+        variantValue.SetFloat(value);
+        FillContentAccordingToVariantTypeValue(&variantValue);
+    }
+}
+
+void YamlNode::Set(const String& name, const char8* value)
+{
+    Set(name, (const String&)value);
+}
+
+void YamlNode::Set(const String& name, const String& value)
+{
+    if (type == TYPE_MAP)
+    {
+        // For Maps just add the new String node.
+        YamlNode* stringNode = new YamlNode(YamlNode::TYPE_STRING);
+        stringNode->Set(name, value);
+        objectMap[name] = stringNode;
+    }
+    else if (type == TYPE_STRING)
+    {
+        // Just initialize the value.
+        VariantType variantValue;
+        variantValue.SetString(value);
+        FillContentAccordingToVariantTypeValue(&variantValue);
+    }
+}
+
+void  YamlNode::AddNodeToMap(const String& name, YamlNode* node)
+{
+    DVASSERT(this->type == TYPE_MAP);
+    objectMap[name] = node;
+}
+
+void  YamlNode::AddNodeToArray(YamlNode* node)
+{
+    DVASSERT(this->type == TYPE_ARRAY);
+    objectArray.push_back(node);
+}
+
+void  YamlNode::AddValueToArray(int32 value)
+{
+    DVASSERT(this->type == TYPE_ARRAY);
+    YamlNode* childNode = new YamlNode(YamlNode::TYPE_STRING);
+    childNode->Set("", value);
+
+    AddNodeToArray(childNode);
+}
+    
+void  YamlNode::AddValueToArray(float32 value)
+{
+    DVASSERT(this->type == TYPE_ARRAY);
+    YamlNode* childNode = new YamlNode(YamlNode::TYPE_STRING);
+    childNode->Set("", value);
+    
+    AddNodeToArray(childNode);
+}
+
+void  YamlNode::AddValueToArray(VariantType* value)
+{
+    DVASSERT(this->type == TYPE_ARRAY);
+    YamlNode* childNode = new YamlNode(YamlNode::TYPE_STRING);
+    childNode->Set("", value);
+        
+    AddNodeToArray(childNode);
+}
+
+void  YamlNode::AddValueToArray(const String& value)
+{
+    DVASSERT(this->type == TYPE_ARRAY);
+    YamlNode* childNode = new YamlNode(YamlNode::TYPE_STRING);
+    childNode->Set("", value);
+    
+    AddNodeToArray(childNode);
+}
+    
+void YamlNode::RemoveNodeFromMap(const String & name)
+{
+    Map<String, YamlNode*>::iterator t;
+    if ((t = objectMap.find(name)) != objectMap.end())
+    {
+        objectMap.erase(t);
+    }
+}
+
+void  YamlNode::InitFromVariantType(VariantType* varType)
+{
+    type = TYPE_MAP;
+    
+    //create key     
+    String variantName = VariantType::variantNamesMap[varType->type].variantName;
+
+    //create value node
+    YamlNode* valueNode = new YamlNode(YamlNode::TYPE_STRING);
+    valueNode->FillContentAccordingToVariantTypeValue(varType);
+    objectMap[variantName]=valueNode;
+}
+    
+void YamlNode::Set(const String& name, VariantType* varType)
+{
+    if (type == TYPE_MAP)
+    {
+        // For Maps just add the new String node.
+        YamlNode* stringNode = new YamlNode(YamlNode::TYPE_STRING);
+        stringNode->Set(name, varType);
+        objectMap[name] = stringNode;
+    }
+    else if (type == TYPE_STRING)
+    {
+    	FillContentAccordingToVariantTypeValue(varType);
+    }
+}
+    
+void  YamlNode::FillContentAccordingToVariantTypeValue(VariantType* varType)
+{
+    type = TYPE_STRING;
+    char str[30];
+    str[0]='\0';
+    switch(varType->type)
+    {
+        case VariantType::TYPE_BOOLEAN:
+        {
+            nwStringValue = varType->AsBool() ? "true" : "false";
+        }
+            break;
+        case VariantType::TYPE_INT32:
+        {
+            sprintf(str, "%d", varType->AsInt32());
+        }
+            break;
+        case VariantType::TYPE_FLOAT:
+        {
+            String letterRepresentation(FloatToCuttedString(varType->AsFloat()));
+            nwStringValue = letterRepresentation;
+            stringValue = StringToWString(letterRepresentation);
+        }
+            break;
+        case VariantType::TYPE_STRING:
+        {
+            String strToInitWith = '"'+varType->AsString()+'"';
+            nwStringValue = String(strToInitWith);
+            stringValue = StringToWString(strToInitWith);
+        }
+            break;
+        case VariantType::TYPE_WIDE_STRING:
+        {
+            String strToInitWith = '"'+WStringToString(varType->AsWideString())+'"';
+            nwStringValue = String(strToInitWith);
+            stringValue = StringToWString(strToInitWith);
+        }
+            break;
+        case VariantType::TYPE_UINT32:
+        {
+            sprintf(str, "%u", varType->AsUInt32());
+        }
+            break;
+        case VariantType::TYPE_INT64:
+        {
+            sprintf(str, "%lld", varType->AsInt64());
+        }
+            break;
+        case VariantType::TYPE_UINT64:
+        {
+            sprintf(str, "%llu", varType->AsUInt64());
+        }
+            break;
+        case VariantType::TYPE_BYTE_ARRAY:
+        {
+            //! need to create subnodes
+            type = TYPE_ARRAY;
+            const uint8* byteArray = varType->AsByteArray();
+            int32 byteArraySize = varType->AsByteArraySize();
+            String arrayRepresentation = "";
+            for (int32 i = 0; i < byteArraySize; ++i)
+            {
+                char letter[10];
+                sprintf(letter, "%x",byteArray[i]);
+                String letterRepresentation(letter);
+                YamlNode* innerNode = new YamlNode(TYPE_STRING);
+                innerNode->nwStringValue = letterRepresentation;
+                innerNode->stringValue = StringToWString(letterRepresentation);
+                objectArray.push_back(innerNode);
+            }
+        }
+            break;
+        case VariantType::TYPE_KEYED_ARCHIVE:
+        {
+            KeyedArchive* archive = varType->AsKeyedArchive();
+            type = TYPE_ARRAY;            
+            
+            //creation array with variables
+            const Map<String, VariantType*> & innerArchiveMap =  archive->GetArchieveData();
+            for (Map<String, VariantType*>::const_iterator it = innerArchiveMap.begin(); it != innerArchiveMap.end(); ++it)
+            {
+                YamlNode* arrayElementNode = new YamlNode(TYPE_MAP);
+                YamlNode* arrayElementNodeValue = new YamlNode(TYPE_MAP);
+                
+                arrayElementNodeValue->InitFromVariantType(it->second);
+                arrayElementNode->objectMap[it->first] = arrayElementNodeValue;
+                
+                objectArray.push_back(arrayElementNode);
+            }
+
+        }
+            break;
+        case VariantType::TYPE_VECTOR2:
+        {
+            type = TYPE_ARRAY;
+            const Vector2 & vector = varType->AsVector2();
+            ProcessVector(vector.data,COUNT_OF(vector.data));
+        }
+            break;
+        case VariantType::TYPE_VECTOR3:
+        {
+            type = TYPE_ARRAY;
+            const Vector3& vector = varType->AsVector3();
+            ProcessVector(vector.data,COUNT_OF(vector.data));
+        }
+            break;
+        case VariantType::TYPE_VECTOR4:
+        {
+            type = TYPE_ARRAY;
+            const Vector4& vector = varType->AsVector4();
+            ProcessVector(vector.data,COUNT_OF(vector.data));
+        }
+            break;
+        case VariantType::TYPE_MATRIX2:
+        {
+            type = TYPE_ARRAY;
+            uint32 dimension = 2;
+            const Matrix2& matrix = varType->AsMatrix2();
+            const float32* array = &matrix._data[0][0];
+            ProcessMatrix(array, dimension);
+        }
+            break;
+        case VariantType::TYPE_MATRIX3:
+        {
+            type = TYPE_ARRAY;
+            uint32 dimension = 3;
+            const Matrix3& matrix = varType->AsMatrix3();
+            const float32* array = &matrix._data[0][0];
+            ProcessMatrix( array, dimension );
+        }
+            break;
+        case VariantType::TYPE_MATRIX4:
+        {
+            type = TYPE_ARRAY;
+            uint32 dimension = 4;
+            const Matrix4& matrix = varType->AsMatrix4();
+            const float32* array = &matrix._data[0][0];
+            ProcessMatrix( array, dimension );
+        }
+            break;
+        default:
+            break;
+    }
+    
+    if(str[0] != '\0')
+    {
+        String value(str);
+        nwStringValue = value;
+        stringValue = StringToWString(value);
+    }
+}
+
+    bool IsZero(char c)
+    {
+        return (c == '0');
+    }
+    
+void YamlNode::ProcessMatrix(const float32* array,uint32 dimension)
+{
+    YamlNode* rowNode;
+    for (uint32 i = 0; i < dimension; ++i)
+    {
+        rowNode = new YamlNode(TYPE_ARRAY);
+        YamlNode* columnNode = NULL;
+        for (uint32 j = 0; j < dimension; ++j)
+        {
+            const float32* elementOfArray = array + ((i*dimension)+j);
+            String letterRepresentation(FloatToCuttedString(*elementOfArray));
+            columnNode = new YamlNode(TYPE_STRING);
+            columnNode->nwStringValue = letterRepresentation;
+            columnNode->stringValue = StringToWString(letterRepresentation);
+            rowNode->objectArray.push_back(columnNode);
+        }
+        objectArray.push_back(rowNode);
+    }
+}
+ 
+void YamlNode::ProcessVector(const float32* array,uint32 dimension)
+{
+    for (uint32 i = 0; i < dimension; ++i)
+    {
+        const float32* elementOfArray = array + i;
+        String letterRepresentation(FloatToCuttedString(*elementOfArray));
+        YamlNode* innerNode = new YamlNode(TYPE_STRING);
+        innerNode->nwStringValue = letterRepresentation;
+        innerNode->stringValue = StringToWString(letterRepresentation);
+        objectArray.push_back(innerNode);
+    }
+}
+
+bool YamlNode::IsContainingMap()
+{
+    bool retValue = false;
+    switch (type)
+    {
+        case YamlNode::TYPE_STRING:
+            break;
+        case YamlNode::TYPE_MAP:
+            retValue =  true;
+            break;
+        case YamlNode::TYPE_ARRAY:
+        {
+            for (Vector<YamlNode*>::iterator it = objectArray.begin(); it != objectArray.end(); ++it)
+            {
+                retValue =  (*it)->IsContainingMap();
+                if(retValue)
+                    break;
+            }
+        }
+            break;
+    }
+    return retValue;
+}
+
+String YamlNode::FloatToCuttedString(float f)
+{
+    char letter[20];
+    sprintf(letter, "%.4f",f);
+    String letterRepresentation(letter);
+	return letterRepresentation;
+}
+    
+void YamlNode::InitFromKeyedArchive(KeyedArchive* archive)
+{
+    type = TYPE_MAP;
+
+    
+    //creation array with variables
+    YamlNode* arrayContentNode = new YamlNode(YamlNode::TYPE_ARRAY);
+    const Map<String, VariantType*> & innerArchiveMap =  archive->GetArchieveData();
+    for (Map<String, VariantType*>::const_iterator it = innerArchiveMap.begin(); it != innerArchiveMap.end(); ++it)
+    {
+        YamlNode* arrayElementNode = new YamlNode(TYPE_MAP);
+        YamlNode* arrayElementNodeValue = new YamlNode(TYPE_MAP);
+
+        arrayElementNodeValue->InitFromVariantType(it->second);
+        arrayElementNode->objectMap[it->first] = arrayElementNodeValue;
+        
+        arrayContentNode->objectArray.push_back(arrayElementNode);
+    }
+    
+    objectMap[VariantType::TYPENAME_KEYED_ARCHIVE] = arrayContentNode;
+     
+}
+    
+/*******************************************************/
 	
 YamlParser * YamlParser::Create(const String & fileName)
 {
@@ -261,6 +949,11 @@ YamlParser * YamlParser::Create(const String & fileName)
 	return parser;
 }
 	
+YamlParser * YamlParser::Create()
+{
+    return new YamlParser();
+}
+    
 bool YamlParser::Parse(const String & pathName)
 {
 	yaml_parser_t parser;
@@ -502,7 +1195,262 @@ bool YamlParser::Parse(const String & pathName)
 	return true;
 }
 	
+bool YamlParser::SaveToYamlFile(const String& fileName, YamlNode * rootNode, bool skipRootNode, uint32 attr /*= File::CREATE | File::WRITE*/)
+{
+    // Firstly try to check whether the file can be created.
+	File * yamlFileToSave = File::Create(fileName, attr);
+    if (!yamlFileToSave)
+    {
+        Logger::Error("[YamlParser::Save] Can't create file: %s for output", fileName.c_str());
+        return false;
+    }
 
+    int16 depth = 0;
+    
+    bool saveSucceeded = false;
+    // This line is not a real loop - it just helps us to break if something wrong happens.
+    for (;;)
+    {
+        if (skipRootNode)
+        {
+            // Take only the children of root node.
+            DVASSERT(rootNode->GetType() == YamlNode::TYPE_MAP);
+            Map<String, YamlNode*> & childrenList = rootNode->AsMap();
+            
+            const Vector<YamlNodeKeyValuePair>& orderedRootLevelItems = OrderMapYamlNode(childrenList);
+            for (Vector<YamlNodeKeyValuePair>::const_iterator iter = orderedRootLevelItems.begin();
+                 iter != orderedRootLevelItems.end(); iter ++)
+            {
+                const YamlNodeKeyValuePair& keyValuePair = (*iter);
+                
+                // Skip all the "leftovers" from the parent - only save the map child nodes.
+                if (keyValuePair.GetNodeValue()->GetType() != YamlNode::TYPE_MAP)
+                {
+                    continue;
+                }
+
+                if (!SaveNodeRecursive(yamlFileToSave, keyValuePair.GetNodeName(),
+                                       keyValuePair.GetNodeValue(), depth))
+                {
+                    break;
+                }
+            }
+        
+            saveSucceeded = true;
+            break;
+        }
+
+        // Save everything including the root.
+        String nodeName;
+        saveSucceeded = SaveNodeRecursive(yamlFileToSave, nodeName, rootNode, depth);
+        break;
+    }
+
+    // Cleanup the memory.
+    SafeRelease(yamlFileToSave);
+
+    return saveSucceeded;
+}
+
+Vector<YamlNodeKeyValuePair> YamlParser::OrderMapYamlNode(const Map<String, YamlNode*>& mapNodes)
+{
+    // Order the map nodes by the "Relative Depth".
+    Vector<YamlNodeKeyValuePair> sortedChildren;
+    for (Map<String, YamlNode*>::const_iterator t = mapNodes.begin(); t != mapNodes.end(); ++t)
+    {
+        // Only the nodes of type Map are expected here.
+        if (t->second->GetType() != YamlNode::TYPE_MAP)
+        {
+            continue;
+        }
+
+        sortedChildren.push_back(YamlNodeKeyValuePair(t->first, t->second));
+    }
+
+    std::sort(sortedChildren.begin(), sortedChildren.end());
+    return sortedChildren;
+}
+    
+bool YamlParser::WriteScalarNodeToYamlFile(File* fileToSave, const String& nodeName, const String& nodeValue, int16 depth)
+{
+    if (nodeName.compare(YamlNode::YAML_NODE_RELATIVE_DEPTH_NAME) == 0)
+    {
+        // This node is for internal use only and to be skipped during save.
+        return true;
+    }
+
+    const char8* NAME_VALUE_DELIMITER = ": ";
+    String resultString = PrepareIdentedString(depth);
+
+    resultString += nodeName;
+    resultString += NAME_VALUE_DELIMITER;
+    resultString += nodeValue;
+    resultString += '\n';
+ 
+    return WriteStringToYamlFile(fileToSave, resultString);
+}
+
+bool YamlParser::WriteArrayNodeToYamlFile(File* fileToSave, const String& nodeName,
+                                          YamlNode* currentNode, int16 depth)
+{
+    DVASSERT(currentNode->GetType() == YamlNode::TYPE_ARRAY);
+
+    const char8* NAME_VALUE_DELIMITER = ": ";
+
+    const char8* ARRAY_OPEN_DELIMITER = "[";
+    const char8* ARRAY_INNER_DELIMITER = ", ";
+    const char8* ARRAY_CLOSE_DELIMITER = "]";
+
+    String resultString = PrepareIdentedString(depth);
+    
+    resultString += nodeName;
+    resultString += NAME_VALUE_DELIMITER;
+    resultString += ARRAY_OPEN_DELIMITER;
+  
+    Vector<YamlNode*>& arrayData = currentNode->AsVector();
+    for (Vector<YamlNode*>::iterator iter = arrayData.begin(); iter != arrayData.end(); iter ++)
+    {
+        YamlNode* arrayNode = (*iter);
+    
+        // Yuri Coder, 11/15/2012 Inner arrays are currently not supported.
+        DVASSERT(arrayNode->GetType() == YamlNode::TYPE_STRING);
+        
+        resultString += arrayNode->AsString();
+        if (arrayNode != arrayData.back())
+        {
+            // Have more nodes - insert space between them.
+            resultString += ARRAY_INNER_DELIMITER;
+        }
+    }
+
+    resultString += ARRAY_CLOSE_DELIMITER;
+    resultString += '\n';
+    return WriteStringToYamlFile(fileToSave, resultString);
+}
+
+bool YamlParser::WriteStringToYamlFile(File* fileToSave, const String& stringToWrite)
+{
+    uint32 prevFileSize = fileToSave->GetSize();
+    uint32 bytesWritten = fileToSave->Write(stringToWrite.c_str(), stringToWrite.size());
+    
+    return (fileToSave->GetSize() == prevFileSize + bytesWritten);
+}
+    
+bool YamlParser::WriteMapNodeToYamlFile(File* fileToSave, const String& mapNodeName, int16 depth)
+{
+    const char8* MAP_DELIMITER = ":";
+
+    String resultString = PrepareIdentedString(depth);
+
+    // Yuri Coder, 2012/11/16. Temporary fix to don't write Map nodes with no names to YAML file.
+    if (mapNodeName.empty())
+    {
+        resultString += "TEMP_NODE_NAME_INSTEAD_OF_EMPTY_NODE";
+    }
+    else
+    {
+        resultString += mapNodeName;
+    }
+
+    resultString += MAP_DELIMITER;
+    resultString += '\n';
+
+    return WriteStringToYamlFile(fileToSave, resultString);
+}
+ 
+String YamlParser::PrepareIdentedString(int16 depth)
+{
+    const int32  IDENTATION_SPACES_COUNT = 4;
+    const char8  IDENTATION_CHAR = 0x20;
+
+    int32 spacesCount = depth * IDENTATION_SPACES_COUNT;
+    char8* spacesBuffer = new char8[spacesCount];
+    memset(spacesBuffer, IDENTATION_CHAR, spacesCount);
+    
+    String resultString(spacesBuffer, spacesCount);
+    delete[] spacesBuffer;
+
+    return resultString;
+}
+
+bool YamlParser::SaveNodeRecursive(File* fileToSave, const String& nodeName,
+                                   YamlNode* currentNode, int16 depth)
+{
+    switch (currentNode->GetType())
+    {
+        case YamlNode::TYPE_STRING:
+        {
+            // Just write Node Name and Value.
+            return WriteScalarNodeToYamlFile(fileToSave, nodeName, currentNode->AsString(), depth);
+        }
+
+        case YamlNode::TYPE_ARRAY:
+        {
+            // An array - parse and write.
+            return WriteArrayNodeToYamlFile(fileToSave, nodeName, currentNode, depth);
+        }
+            
+        case YamlNode::TYPE_MAP:
+        {
+            // Open the Map.
+            if (!WriteMapNodeToYamlFile(fileToSave, nodeName, depth))
+            {
+                return false;
+            }
+
+            // Firstly build the list of the non-map nodes to save them, then recursively go through
+            // map nodes.
+            Map<String, YamlNode*> nonMapNodes;
+            Map<String, YamlNode*> mapNodes;
+            
+            for (Map<String, YamlNode*>::iterator t = currentNode->AsMap().begin(); t != currentNode->AsMap().end(); ++t)
+            {
+                YamlNode* childNode = t->second;
+                if (childNode->GetType() == YamlNode::TYPE_MAP)
+                {
+                    mapNodes.insert(std::make_pair<String, YamlNode*>(t->first, childNode));
+                }
+                else
+                {
+                    nonMapNodes.insert(std::make_pair<String, YamlNode*>(t->first, childNode));
+                }
+            }
+            
+            // Process local values...
+            depth ++;
+            for (Map<String, YamlNode*>::iterator t = nonMapNodes.begin(); t != nonMapNodes.end(); ++t)
+            {
+                SaveNodeRecursive(fileToSave, t->first, t->second, depth);
+            }
+
+            // Order the map nodes by the "Relative Depth" and write.
+            const Vector<YamlNodeKeyValuePair>& sortedMapNodes = OrderMapYamlNode(mapNodes);
+            for (std::vector<YamlNodeKeyValuePair>::const_iterator t = sortedMapNodes.begin(); t != sortedMapNodes.end(); ++t)
+            {
+                SaveNodeRecursive(fileToSave, (*t).GetNodeName(), (*t).GetNodeValue(), depth);
+            }
+
+            if (depth == 1)
+            {
+                // Add a delimiter for root-level nodes to make the reading of file easier.
+                if (!WriteStringToYamlFile(fileToSave, "\n"))
+                {
+                    return false;
+                }
+            }
+
+            break;
+        }
+            
+        default:
+        {
+            Logger::Error("Unknown Node Type %i while saving YAML file!", currentNode->GetType());
+            return false;
+        }
+    }
+
+    return true;
+}
 	
 YamlParser::YamlParser()
 {

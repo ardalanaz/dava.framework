@@ -12,7 +12,7 @@
 #include "Entity/Entity.h"
 #include "ParticleEmitterPropertyControl.h"
 #include "SwitchNodePropertyControl.h"
-
+#include "ParticleEffectPropertyControl.h"
 
 PropertyControlCreator::PropertyControlCreator()
 {
@@ -87,6 +87,13 @@ NodesPropertyControl * PropertyControlCreator::CreateControlForNode(SceneNode * 
 		return CreateControlForNode(EPCID_SWITCH, rect, createNodeProperties);
 	}
 
+	ParticleEffectNode * particleEffect = dynamic_cast<ParticleEffectNode*>(sceneNode);
+	if(particleEffect)
+	{
+		return CreateControlForNode(EPCID_PARTICLE_EFFECT, rect, createNodeProperties);
+	}
+
+
 	return CreateControlForNode(EPCID_NODE, rect, createNodeProperties);
 }
 
@@ -148,6 +155,10 @@ NodesPropertyControl * PropertyControlCreator::CreateControlForNode(
                 controls[controlID] = new LandscapeEditorPropertyControl(rect, createNodeProperties, LandscapeEditorPropertyControl::HEIGHT_EDITOR_MODE);
                 break;
 
+			case EPCID_LANDSCAPE_EDITOR_COLORIZE:
+                controls[controlID] = new LandscapeEditorPropertyControl(rect, createNodeProperties, LandscapeEditorPropertyControl::COLORIZE_EDITOR_MODE);
+                break;
+
             case EPCID_DATANODE:
                 controls[controlID] = new NodesPropertyControl(rect, createNodeProperties);
                 break;
@@ -160,6 +171,11 @@ NodesPropertyControl * PropertyControlCreator::CreateControlForNode(
 			case EPCID_SWITCH:
 				controls[controlID] = new SwitchNodePropertyControl(rect, createNodeProperties);
 				break;
+
+			case EPCID_PARTICLE_EFFECT:
+				controls[controlID] = new ParticleEffectPropertyControl(rect, createNodeProperties);
+				break;
+
                 
             default:
                 break; 
@@ -179,6 +195,10 @@ NodesPropertyControl * PropertyControlCreator::CreateControlForLandscapeEditor(S
     else if(LandscapeEditorPropertyControl::HEIGHT_EDITOR_MODE == mode)
     {
         return CreateControlForNode(EPCID_LANDSCAPE_EDITOR_HEIGHT, rect, false);
+    }
+	else if(LandscapeEditorPropertyControl::COLORIZE_EDITOR_MODE == mode)
+    {
+        return CreateControlForNode(EPCID_LANDSCAPE_EDITOR_COLORIZE, rect, false);
     }
 
     return NULL;

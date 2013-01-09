@@ -32,6 +32,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Utils/StringFormat.h"
 #include "Render/RenderManager.h"
+#include "Render/Image.h"
 #include "Utils/Random.h"
 #include "FileSystem/FileSystem.h"
 
@@ -223,7 +224,7 @@ void ParticleLayer::SetSprite(Sprite * _sprite)
 	{
 		pivotPoint = Vector2(_sprite->GetWidth()/2.0f, _sprite->GetHeight()/2.0f);
 
-		String spritePath = FileSystem::NormalizePath(sprite->GetRelativePathname());
+		String spritePath = FileSystem::GetCanonicalPath(sprite->GetRelativePathname());
 		const String configPath = emitter->GetConfigPath();
 		String configFolder, configFile;
 		FileSystem::SplitPath(configPath, configFolder, configFile);
@@ -566,7 +567,7 @@ void ParticleLayer::Draw()
 	}
 	else 
 	{
-		RenderManager::Instance()->SetBlendMode(BLEND_ONE, BLEND_ONE_MINUS_SRC_ALPHA);
+		RenderManager::Instance()->SetBlendMode(BLEND_SRC_ALPHA, BLEND_ONE_MINUS_SRC_ALPHA);
 	}
 
 	switch(type)

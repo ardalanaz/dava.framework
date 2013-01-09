@@ -40,14 +40,18 @@
 #include "Scene3D/SceneFileV2.h"
 #include "Scene3D/Heightmap.h"
 #include "FileSystem/FileSystem.h"
+#include "Render/TextureDescriptor.h"
+#include "Render/ImageLoader.h"
 
 #include "Debug/Stats.h"
+
 
 namespace DAVA
 {
 REGISTER_CLASS(LandscapeNode);
 
 //#define DRAW_OLD_STYLE
+// const float32 LandscapeNode::TEXTURE_TILE_FULL_SIZE = 2048;
 
 LandscapeNode::LandscapeNode()
 	: SceneNode()
@@ -237,19 +241,15 @@ void LandscapeNode::SetLods(const Vector4 & lods)
     
 void LandscapeNode::BuildLandscapeFromHeightmapImage(const String & heightmapPathname, const AABBox3 & _box)
 {
-    heightmapPath = heightmapPathname;
-    
     ReleaseShaders(); // release previous shaders
     ReleaseAllRDOQuads();
-
     SafeDeleteArray(indices); //TODO: need here or no?
     
+	heightmapPath = heightmapPathname;
+	box = _box;
+
     InitShaders(); // init new shaders according to the selected rendering mode
-    
     BuildHeightmap();
-    
-    box = _box;
-    
     BuildLandscape();
 }
 
@@ -259,20 +259,21 @@ bool LandscapeNode::BuildHeightmap()
     String extension = FileSystem::Instance()->GetExtension(heightmapPath);
     if(".png" == extension)
     {
-        Image *image = Image::CreateFromFile(heightmapPath);
-        if(image)
+        Vector<Image *> imageSet = ImageLoader::CreateFromFile(heightmapPath);
+        if(0 != imageSet.size())
         {
-            if ((image->GetPixelFormat() != FORMAT_A8) && (image->GetPixelFormat() != FORMAT_A16))
+            if ((imageSet[0]->GetPixelFormat() != FORMAT_A8) && (imageSet[0]->GetPixelFormat() != FORMAT_A16))
             {
                 Logger::Error("Image for landscape should be grayscale");
             }
-            else 
+            else
             {
-                DVASSERT(image->GetWidth() == image->GetHeight());
-                heightmap->BuildFromImage(image);
+                DVASSERT(imageSet[0]->GetWidth() == imageSet[0]->GetHeight());
+                heightmap->BuildFromImage(imageSet[0]);
                 retValue = true;
             }
-            SafeRelease(image);
+            
+            for_each(imageSet.begin(), imageSet.end(), SafeRelease<Image>);
         }
     }
     else if(Heightmap::FileExtension() == extension)
@@ -295,13 +296,16 @@ void LandscapeNode::BuildLandscape()
     quadTreeHead.data.rdoQuad = -1;
     
     SetLods(Vector4(60.0f, 120.0f, 240.0f, 480.0f));
-    
+ 
     allocatedMemoryForQuads = 0;
-    RecursiveBuild(&quadTreeHead, 0, lodLevelsCount);
-    FindNeighbours(&quadTreeHead);
-    
-    indices = new uint16[INDEX_ARRAY_COUNT];
-    
+
+    if(heightmap->Size())
+    {
+        RecursiveBuild(&quadTreeHead, 0, lodLevelsCount);
+        FindNeighbours(&quadTreeHead);
+        
+        indices = new uint16[INDEX_ARRAY_COUNT];
+    }
     
 //    Logger::Debug("Allocated indices: %d KB", RENDER_QUAD_WIDTH * RENDER_QUAD_WIDTH * 6 * 2 / 1024);
 //    Logger::Debug("Allocated memory for quads: %d KB", allocatedMemoryForQuads / 1024);
@@ -575,8 +579,6 @@ const Vector2 & LandscapeNode::GetTextureTiling(eTextureLevel level)
     
 void LandscapeNode::SetTexture(eTextureLevel level, const String & textureName)
 {
-    Image::EnableAlphaPremultiplication(false);
-
     SafeRelease(textures[level]);
     textureNames[level] = String("");
     
@@ -584,8 +586,6 @@ void LandscapeNode::SetTexture(eTextureLevel level, const String & textureName)
     if (texture)
     {
         textureNames[level] = textureName;
-        texture->GenerateMipmaps();
-        texture->SetWrapMode(Texture::WRAP_REPEAT, Texture::WRAP_REPEAT);
     }
     textures[level] = texture;
     
@@ -593,8 +593,6 @@ void LandscapeNode::SetTexture(eTextureLevel level, const String & textureName)
     {
         UpdateFullTiledTexture();
     }
-
-    Image::EnableAlphaPremultiplication(true);
 }
     
 Texture * LandscapeNode::CreateTexture(eTextureLevel level, const String & textureName)
@@ -602,6 +600,9 @@ Texture * LandscapeNode::CreateTexture(eTextureLevel level, const String & textu
     if(TEXTURE_TILE_FULL == level)
     {
         //must not zero only for finalized maps
+        if(textureName.empty())
+            return NULL;
+        
         return Texture::PureCreate(textureName);
     }
 
@@ -612,25 +613,16 @@ Texture * LandscapeNode::CreateTexture(eTextureLevel level, const String & textu
 void LandscapeNode::SetTexture(eTextureLevel level, Texture *texture)
 {
     SafeRelease(textures[level]);
-    textures[level] = SafeRetain(texture);
-    
+	textureNames[level] = String("");
+
+	textures[level] = SafeRetain(texture);
     if(textures[level])
     {
-        if(textures[level]->isRenderTarget)
+        if(!textures[level]->isRenderTarget)
         {
-            textureNames[level] = String("");
-        }
-        else 
-        {
-            //TODO: VK: need to save pathname, not relative pathname. (Will be worked only for *.png, not for *.pvr)
-            textureNames[level] = textures[level]->relativePathname;
+            textureNames[level] = textures[level]->GetPathname();
         }
     }
-    else 
-    {
-        textureNames[level] = String("");
-    }
-    
 }
 
     
@@ -1185,7 +1177,10 @@ void LandscapeNode::Draw()
     }
 	FlushQueue();
     
-    if(nearLodIndex != farLodIndex)     BindMaterial(farLodIndex);
+    if(nearLodIndex != farLodIndex)     
+	{
+		BindMaterial(farLodIndex);
+	}
 
     int32 countNot0 = lodNot0quads.size();
     for(int32 i = 0; i < countNot0; ++i)
@@ -1226,7 +1221,10 @@ void LandscapeNode::Draw()
         
         Draw(&quadTreeHead);
         
-        if(nearLodIndex != farLodIndex)     BindMaterial(nearLodIndex);
+        if(nearLodIndex != farLodIndex)     
+		{
+			BindMaterial(nearLodIndex);
+		}
         int32 count0 = lod0quads.size();
         for(int32 i = 0; i < count0; ++i)
         {
@@ -1234,7 +1232,10 @@ void LandscapeNode::Draw()
         }
         FlushQueue();
         
-        if(nearLodIndex != farLodIndex)     BindMaterial(farLodIndex);
+        if(nearLodIndex != farLodIndex)
+		{
+			BindMaterial(farLodIndex);
+		}
         
         int32 countNot0 = lodNot0quads.size();
         for(int32 i = 0; i < countNot0; ++i)
@@ -1356,6 +1357,8 @@ void LandscapeNode::Save(KeyedArchive * archive, SceneFileV2 * sceneFile)
     archive->SetByteArrayAsType("bbox", box);
     for (int32 k = 0; k < TEXTURE_COUNT; ++k)
     {
+        if(TEXTURE_DETAIL == k) continue;
+
         String path = textureNames[k];
         String relPath  = sceneFile->AbsoluteToRelative(path);
         
@@ -1391,8 +1394,10 @@ void LandscapeNode::Load(KeyedArchive * archive, SceneFileV2 * sceneFile)
         
     for (int32 k = 0; k < TEXTURE_COUNT; ++k)
     {
+        if(TEXTURE_DETAIL == k) continue;
+        
         String textureName = archive->GetString(Format("tex_%d", k));
-        String absPath = sceneFile->RelativeToAbsolute(textureName);
+        String absPath = (textureName.empty()) ? String(""): sceneFile->RelativeToAbsolute(textureName);
         if(sceneFile->DebugLogEnabled())
             Logger::Debug("landscape tex %d load: %s abs:%s", k, textureName.c_str(), absPath.c_str());
 
@@ -1474,7 +1479,6 @@ void LandscapeNode::SetHeightmap(DAVA::Heightmap *height)
     
     SafeDeleteArray(indices);
 
-    
     heightmap = SafeRetain(height);
     BuildLandscape();
 }
@@ -1544,7 +1548,7 @@ Texture * LandscapeNode::CreateFullTiledTexture()
  
     RenderManager::Instance()->SetMatrix(RenderManager::MATRIX_MODELVIEW, Matrix4::IDENTITY);
     Matrix4 projection;
-    projection.glOrtho(0, TEXTURE_TILE_FULL_SIZE, 0, TEXTURE_TILE_FULL_SIZE, 0, 1);
+    projection.glOrtho(0, (float32)TEXTURE_TILE_FULL_SIZE, 0, (float32)TEXTURE_TILE_FULL_SIZE, 0, 1);
     RenderManager::Instance()->SetMatrix(RenderManager::MATRIX_PROJECTION, projection);
     RenderManager::Instance()->SetState(RenderStateBlock::DEFAULT_2D_STATE);
     
@@ -1557,7 +1561,7 @@ Texture * LandscapeNode::CreateFullTiledTexture()
     UnbindMaterial();
 
 #ifdef __DAVAENGINE_OPENGL__
-	BindFBO(RenderManager::Instance()->GetFBOViewFramebuffer());
+	RenderManager::Instance()->HWglBindFBO(RenderManager::Instance()->GetFBOViewFramebuffer());
 #endif //#ifdef __DAVAENGINE_OPENGL__
     
 	RenderManager::Instance()->SetViewport(oldViewport, true);
@@ -1583,7 +1587,7 @@ String LandscapeNode::SaveFullTiledTexture()
             Image *image = textures[TEXTURE_TILE_FULL]->CreateImageFromMemory();
             if(image)
             {
-                image->Save(pathToSave);
+                ImageLoader::Save(image, pathToSave);
                 SafeRelease(image);
             }
         }

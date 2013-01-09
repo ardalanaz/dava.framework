@@ -28,41 +28,18 @@
         * Created by Vitaliy Borodovsky 
 =====================================================================================*/
 #include "Render/Image.h"
-#include "FileSystem/Logger.h"
-#include "Platform/SystemTimer.h"
-#include "Utils/Utils.h"
-#include "Render/LibPngHelpers.h"
-#include "FileSystem/File.h"
-#include "FileSystem/FileSystem.h"
 #include "Render/Texture.h"
-
-#if defined(__DAVAENGINE_IPHONE__) 
-#include <CoreGraphics/CoreGraphics.h>
-#include <CoreFoundation/CoreFoundation.h>
-#elif defined(__DAVAENGINE_MACOS__)
-#include <ApplicationServices/ApplicationServices.h>
-#endif //PLATFORMS
 
 namespace DAVA 
 {
     
-bool Image::isAlphaPremultiplicationEnabled = true;
-bool Image::IsAlphaPremultiplicationEnabled()
-{
-    return isAlphaPremultiplicationEnabled; 
-}
-
-void Image::EnableAlphaPremultiplication(bool isEnabled)
-{
-    isAlphaPremultiplicationEnabled = isEnabled;
-}
 
 Image::Image()
 :	data(0)
+,   dataSize(0)
 ,	width(0)
 ,	height(0)
 ,	format(FORMAT_RGB565)
-,	isAlphaPremultiplied(false)
 {
 }
 
@@ -79,9 +56,27 @@ Image * Image::Create(int32 width, int32 height, PixelFormat format)
 	image->format = format;
     
     int32 formatSize = Texture::GetPixelFormatSizeInBytes(format);
-    if(formatSize)
+    if(formatSize || (format >= FORMAT_DXT1 && format <= FORMAT_DXT1A))
     {
-        image->data = new uint8[width * height * formatSize];
+		//workaround, because formatSize is not designed for formats with 4 bits per pixel
+		image->dataSize = width * height * formatSize;
+		
+		if(format >= FORMAT_DXT1 && format <= FORMAT_DXT5NM)
+		{
+			uint32 dSize = formatSize == 0 ? (width * height) / 2 : width * height ;
+			if(width < 4 || height < 4)// size lower than  block's size
+			{
+				uint32 minvalue = width < height ? width : height;
+				uint32 maxvalue = width > height ? width : height;
+				minvalue = minvalue < 4 ? 4 : minvalue;
+				maxvalue = maxvalue < 4 ? 4 : maxvalue;
+				dSize = Texture::GetPixelFormatSizeInBits(format) * minvalue * maxvalue;
+				dSize /= 8;
+			}
+			image->dataSize = dSize;
+		}
+        
+        image->data = new uint8[image->dataSize];
     }
     else 
     {
@@ -91,71 +86,76 @@ Image * Image::Create(int32 width, int32 height, PixelFormat format)
 	return image;
 }
 
-
-    
-#if defined(__DAVAENGINE_WIN32__) || defined(__DAVAENGINE_MACOS__) || defined(__DAVAENGINE_IPHONE__) || defined(__DAVAENGINE_ANDROID__)
-
-
-Image * Image::CreateFromFile(const String & pathName)
+void Image::ResizeImage(int32 newWidth, int32 newHeight)
 {
-	Image * davaImage = new Image();
-	if (1 != LibPngWrapper::ReadPngFile(pathName.c_str(), davaImage))
+	if(newWidth>0 && newHeight>0)
 	{
-		SafeRelease(davaImage);
-		return 0;
+		uint8 * newData = NULL;
+		uint8 formatSize = Texture::GetPixelFormatSizeInBytes(format);
+
+		if(formatSize>0)
+		{
+			newData = new uint8[newWidth * newHeight * formatSize];
+			memset(newData, 0, newWidth * newHeight * formatSize);
+
+			float32 kx = (float32)width / (float32)newWidth;
+			float32 ky = (float32)height / (float32)newHeight;
+
+			float32 xx = 0, yy = 0;
+			int32 offset = 0;
+			int32 offsetOld = 0;
+			int32 posX, posY;
+			for (int32 y = 0; y < newHeight; ++y)
+			{
+				for (int32 x = 0; x < newWidth; ++x)
+				{
+					posX = (int32)(xx + 0.5f);
+					posY = (int32)(yy + 0.5f);
+					if (posX >= width)
+						posX = width - 1;
+
+					if (posY >= height)
+						posY = height - 1;
+
+
+					offsetOld = (posY * width + posX) * formatSize;
+					memcpy(newData + offset, data + offsetOld, formatSize);
+
+					xx += kx;
+					offset += formatSize;
+				}
+				yy += ky;
+				xx = 0;
+			}
+
+			// resized data
+			width = newWidth;
+			height = newHeight;
+			SafeDeleteArray(data);
+			data = newData;
+		}
 	}
-    if (isAlphaPremultiplicationEnabled)
-    {
-        if(davaImage->format == FORMAT_RGBA8888) 
-        {
-            unsigned int * inOutPixel32 = (unsigned int*)davaImage->data;
-            for(int i = 0; i < davaImage->width * davaImage->height; ++i)
-            {
-                unsigned int pixel = *inOutPixel32;
 
-                unsigned int a = (pixel >> 24) & 0xFF;
-                unsigned int r = (pixel >> 16) & 0xFF;
-                unsigned int g = (pixel >> 8) & 0xFF;
-                unsigned int b = pixel & 0xFF;
+}
 
-                {
-                    r = r * a / 255;
-                    g = g * a / 255;
-                    b = b * a / 255;
-                }
-
-                *inOutPixel32 = ((a) << 24) | (r << 16) | (g << 8) | b;
-                inOutPixel32++;
-                //	*inOutPixel32 = ((*inAlphaData) << 24) | pixel;
-                //	unsigned int a = *inAlphaData;
-                //	inAlphaData++;
-            }
-            davaImage->isAlphaPremultiplied = true;
-        }
-    }
-	return davaImage;
-};
-
-#else //other platforms
-
-#endif //PLATFORMS	
-
-void Image::Resize(int32 newWidth, int32 newHeight)
+void Image::ResizeCanvas(int32 newWidth, int32 newHeight)
 {
     if(newWidth>0 && newHeight>0)
     {
         uint8 * newData = NULL;
+        uint32 newDataSize = 0;
         uint8 formatSize = Texture::GetPixelFormatSizeInBytes(format);
         
         if(formatSize>0)
         {
-            newData = new uint8[newWidth * newHeight * formatSize];
+            newDataSize = newWidth * newHeight * formatSize;
+            newData = new uint8[newDataSize];
             
-            int32 currentLine = 0;
-            int32 indexOnLine = 0;
-            int32 indexInOldData = 0;
+            uint32 currentLine = 0;
+            uint32 indexOnLine = 0;
+            uint32 indexInOldData = 0;
             
-            for(int32 i = 0; i < newWidth * newHeight * formatSize; ++i)
+            for(uint32 i = 0; i < newDataSize; ++i)
             {
                 if((currentLine+1)*newWidth*formatSize<=i)
                 {
@@ -163,11 +163,11 @@ void Image::Resize(int32 newWidth, int32 newHeight)
                 }
                 
                 indexOnLine = i - currentLine*newWidth*formatSize;
-
-                if(currentLine<height)
+                
+                if(currentLine<(uint32)height)
                 {
                     // within height of old image
-                    if(indexOnLine<width*formatSize)
+                    if(indexOnLine<(uint32)(width*formatSize))
                     {
                         // we have data in old image for new image
                         indexInOldData = currentLine*width*formatSize + indexOnLine;
@@ -187,16 +187,12 @@ void Image::Resize(int32 newWidth, int32 newHeight)
             // resized data
             width = newWidth;
             height = newHeight;
+            
             SafeDeleteArray(data);
             data = newData;
+            dataSize = newDataSize;
         }
     }
-}
-
-void Image::Save(const String & filename)
-{
-	DVASSERT((FORMAT_RGBA8888 == format) || (FORMAT_A8 == format) || (FORMAT_A16 == format));
-	LibPngWrapper::WritePngFile(filename.c_str(), width, height, data, format);
 }
 
 

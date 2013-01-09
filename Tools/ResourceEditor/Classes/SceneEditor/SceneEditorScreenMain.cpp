@@ -1,7 +1,6 @@
 #include "SceneEditorScreenMain.h"
 
 #include "EditorBodyControl.h"
-#include "LibraryControl.h"
 
 #include "ControlsFactory.h"
 #include "../EditorScene.h"
@@ -12,10 +11,8 @@
 #include "SceneValidator.h"
 
 #include "TextureTrianglesDialog.h"
-#include "TextureConverterDialog.h"
 
 #include "PropertyControlCreator.h"
-#include "ErrorNotifier.h"
 
 #include "HintManager.h"
 #include "HelpDialog.h"
@@ -24,9 +21,10 @@
 
 #include "SceneExporter.h"
 
-#include "../Qt/SceneData.h"
-#include "../Qt/SceneDataManager.h"
-#include "../Qt/ScenePreviewDialog.h"
+#include "../Qt/Scene/SceneData.h"
+#include "../Qt/Scene/SceneDataManager.h"
+#include "../Qt/Main/ScenePreviewDialog.h"
+#include "../Qt/Main/QtUtils.h"
 #include "FileSystem/FileSystem.h"
 
 SceneEditorScreenMain::SceneEditorScreenMain()
@@ -38,7 +36,6 @@ SceneEditorScreenMain::SceneEditorScreenMain()
 
 void SceneEditorScreenMain::LoadResources()
 {
-    new ErrorNotifier();
     new HintManager();
     new UNDOManager();
     new PropertyControlCreator();
@@ -56,7 +53,6 @@ void SceneEditorScreenMain::LoadResources()
     Rect fullRect = GetRect();
     settingsDialog = new SettingsDialog(fullRect, this);
     textureTrianglesDialog = new TextureTrianglesDialog();
-    textureConverterDialog = new TextureConverterDialog(fullRect);
     materialEditor = new MaterialEditor();
 	particlesEditor = new ParticlesEditorControl();
     
@@ -82,7 +78,6 @@ void SceneEditorScreenMain::UnloadResources()
     SafeRelease(scenePreviewDialog);
 
     SafeRelease(helpDialog);
-    SafeRelease(textureConverterDialog);
     SafeRelease(textureTrianglesDialog);
     SafeRelease(settingsDialog);
     
@@ -94,7 +89,6 @@ void SceneEditorScreenMain::UnloadResources()
         
     HintManager::Instance()->Release();
     PropertyControlCreator::Instance()->Release();
-    ErrorNotifier::Instance()->Release();
     UNDOManager::Instance()->Release();
 }
 
@@ -156,7 +150,7 @@ void SceneEditorScreenMain::AddBodyItem(const WideString &text, bool isCloseable
     HideScenePreview();
     
     EditorScene *scene = SceneDataManager::Instance()->RegisterNewScene();
-    SceneDataManager::Instance()->ActivateScene(scene);
+    SceneDataManager::Instance()->SetActiveScene(scene);
     
     BodyItem *c = new BodyItem();
     
@@ -186,7 +180,7 @@ void SceneEditorScreenMain::AddBodyItem(const WideString &text, bool isCloseable
     }
 
     
-    SceneData *sceneData = SceneDataManager::Instance()->GetActiveScene();
+    SceneData *sceneData = SceneDataManager::Instance()->SceneGetActive();
     c->bodyControl->SetScene(sceneData->GetScene());
     c->bodyControl->SetCameraController(sceneData->GetCameraController());
     c->bodyControl->SetTag(count);
@@ -221,7 +215,7 @@ void SceneEditorScreenMain::OnSelectBody(BaseObject * owner, void *, void *)
     AddControl(bodies[btn->GetTag()]->bodyControl);
     bodies[btn->GetTag()]->headerButton->SetSelected(true, false);    
     
-    SceneDataManager::Instance()->ActivateScene(bodies[btn->GetTag()]->bodyControl->GetScene());
+    SceneDataManager::Instance()->SetActiveScene(bodies[btn->GetTag()]->bodyControl->GetScene());
 }
 void SceneEditorScreenMain::OnCloseBody(BaseObject * owner, void *, void *)
 {
@@ -387,8 +381,7 @@ void SceneEditorScreenMain::Input(DAVA::UIEvent *event)
 {
     if(UIEvent::PHASE_KEYCHAR == event->phase)
     {
-        bool altIsPressed = InputSystem::Instance()->GetKeyboard()->IsKeyPressed(DVKEY_ALT);
-        if(altIsPressed)
+        if(IsKeyModificatorPressed(DVKEY_ALT))
         {
             int32 key = event->tid - DVKEY_1;
             if(0 <= key && key < 8)
@@ -440,7 +433,7 @@ void SceneEditorScreenMain::Input(DAVA::UIEvent *event)
 void SceneEditorScreenMain::OpenFileAtScene(const String &pathToFile)
 {
     //опен всегда загружает только уровень, но не отдельные части сцены
-    SceneData *levelScene = SceneDataManager::Instance()->GetLevelScene();
+    SceneData *levelScene = SceneDataManager::Instance()->SceneGetLevel();
     levelScene->EditScene(pathToFile);
     levelScene->SetScenePathname(pathToFile);
 }
@@ -480,7 +473,7 @@ void SceneEditorScreenMain::EditParticleEmitter(ParticleEmitterNode * emitter)
 
 void SceneEditorScreenMain::NewScene()
 {
-    SceneData *levelScene = SceneDataManager::Instance()->GetLevelScene();
+    SceneData *levelScene = SceneDataManager::Instance()->SceneGetLevel();
     levelScene->CreateScene(true);
     
     bodies[0]->bodyControl->SetScene(levelScene->GetScene());
@@ -492,7 +485,7 @@ bool SceneEditorScreenMain::SaveIsAvailable()
 {
     if(FindCurrentBody()->bodyControl->LandscapeEditorActive())
     {
-        ErrorNotifier::Instance()->ShowError("Can't save level at Landscape Editor Mode.");
+        ShowErrorDialog(String("Can't save level at Landscape Editor Mode."));
         return false;
     }
 
@@ -501,7 +494,7 @@ bool SceneEditorScreenMain::SaveIsAvailable()
 
 String SceneEditorScreenMain::CurrentScenePathname()
 {
-    SceneData *sceneData = SceneDataManager::Instance()->GetActiveScene();
+    SceneData *sceneData = SceneDataManager::Instance()->SceneGetActive();
     String pathname = sceneData->GetScenePathname();
     if (0 < pathname.length())
     {
@@ -514,7 +507,7 @@ String SceneEditorScreenMain::CurrentScenePathname()
 
 void SceneEditorScreenMain::SaveSceneToFile(const String &pathToFile)
 {
-    SceneData *sceneData = SceneDataManager::Instance()->GetActiveScene();
+    SceneData *sceneData = SceneDataManager::Instance()->SceneGetActive();
     sceneData->SetScenePathname(pathToFile);
 
     BodyItem *iBody = FindCurrentBody();
@@ -586,7 +579,7 @@ void SceneEditorScreenMain::SaveToFolder(const String & folder)
     BodyItem *iBody = FindCurrentBody();
 	iBody->bodyControl->PushDebugCamera();
     
-    SceneData *sceneData = SceneDataManager::Instance()->GetActiveScene();
+    SceneData *sceneData = SceneDataManager::Instance()->SceneGetActive();
     String filePath = sceneData->GetScenePathname();
     String dataSourcePath = EditorSettings::Instance()->GetDataSourcePath();
     String::size_type pos = filePath.find(dataSourcePath);
@@ -619,10 +612,7 @@ void SceneEditorScreenMain::SaveToFolder(const String & folder)
     
 	iBody->bodyControl->PopDebugCamera();
     
-    if(0 < errorsLog.size())
-    {
-        ErrorNotifier::Instance()->ShowError(errorsLog);
-    }
+    ShowErrorDialog(errorsLog);
 
 	FileSystem::Instance()->DeleteFile(outputFolder + filePath);
 	CopyFile(filePath);
@@ -630,22 +620,22 @@ void SceneEditorScreenMain::SaveToFolder(const String & folder)
 	CheckNodes(iBody->bodyControl->GetScene());
 }
 
-void SceneEditorScreenMain::ExportAs(ResourceEditor::eExportFormat format)
+void SceneEditorScreenMain::ExportAs(ImageFileFormat format)
 {
     String formatStr;
     switch (format) 
     {
-        case ResourceEditor::FORMAT_PNG:
+        case DAVA::PNG_FILE:
             formatStr = String("png");
             break;
             
-        case ResourceEditor::FORMAT_PVR:
+        case DAVA::PVR_FILE:
             formatStr = String("pvr");
             break;
             
-        case ResourceEditor::FORMAT_DXT:
-            DVASSERT(0);
-            return;
+        case DAVA::DXT_FILE:
+            formatStr = String("dds");
+            break;
             
         default:
 			DVASSERT(0);
@@ -656,7 +646,7 @@ void SceneEditorScreenMain::ExportAs(ResourceEditor::eExportFormat format)
     BodyItem *iBody = FindCurrentBody();
 	iBody->bodyControl->PushDebugCamera();
     
-    SceneData *sceneData = SceneDataManager::Instance()->GetActiveScene();
+    SceneData *sceneData = SceneDataManager::Instance()->SceneGetActive();
     String filePath = sceneData->GetScenePathname();
     String dataSourcePath = EditorSettings::Instance()->GetDataSourcePath();
     String::size_type pos = filePath.find(dataSourcePath);
@@ -687,10 +677,7 @@ void SceneEditorScreenMain::ExportAs(ResourceEditor::eExportFormat format)
     
 	iBody->bodyControl->PopDebugCamera();
     
-    if(0 < errorsLog.size())
-    {
-        ErrorNotifier::Instance()->ShowError(errorsLog);
-    }
+    ShowErrorDialog(errorsLog);
 }
 
 
@@ -744,19 +731,6 @@ void SceneEditorScreenMain::MaterialsTriggered()
     }
 }
 
-void SceneEditorScreenMain::TextureConverterTriggered()
-{
-    ReleaseResizedControl(textureConverterDialog);
-    textureConverterDialog = new TextureConverterDialog(this->GetRect());
-    
-    if(textureConverterDialog)
-    {
-        BodyItem *body = FindCurrentBody();
-        
-        textureConverterDialog->Show(body->bodyControl->GetScene());
-    }
-}
-
 void SceneEditorScreenMain::HeightmapTriggered()
 {
     BodyItem *iBody = FindCurrentBody();
@@ -767,6 +741,42 @@ void SceneEditorScreenMain::TilemapTriggered()
 {
     BodyItem *iBody = FindCurrentBody();
     bool ret = iBody->bodyControl->ToggleLandscapeEditor(ELEMID_COLOR_MAP);
+}
+
+void SceneEditorScreenMain::CustomColorsTriggered()
+{
+    BodyItem *iBody = FindCurrentBody();
+    bool ret = iBody->bodyControl->ToggleLandscapeEditor(ELEMID_CUSTOM_COLORS);	
+}
+
+void SceneEditorScreenMain::CustomColorsSetRadius(uint32 newRadius)
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->SetBrushRadius(newRadius);
+}
+
+void SceneEditorScreenMain::CustomColorsSetColor(uint32 indexInSet)
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->SetColorIndex(indexInSet);
+}
+
+void SceneEditorScreenMain::CustomColorsSaveTexture(const String &path)
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->SaveTexture(path);
+}
+
+void SceneEditorScreenMain::CustomColorsLoadTexture(const String &path)
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->CustomColorsLoadTexture(path);
+}
+
+String SceneEditorScreenMain::CustomColorsGetCurrentSaveFileName()
+{
+	BodyItem *iBody = FindCurrentBody();
+	return iBody->bodyControl->CustomColorsGetCurrentSaveFileName();
 }
 
 void SceneEditorScreenMain::SelectNodeQt(DAVA::SceneNode *node)
@@ -862,4 +872,40 @@ void SceneEditorScreenMain::RulerToolTriggered()
 {
     BodyItem *iBody = FindCurrentBody();
     iBody->bodyControl->RulerToolTriggered();
+}
+
+void SceneEditorScreenMain::VisibilityToolTriggered()
+{
+    BodyItem *iBody = FindCurrentBody();
+    bool ret = iBody->bodyControl->ToggleLandscapeEditor(ELEMID_VISIBILITY_CHECK_TOOL);
+}
+
+void SceneEditorScreenMain::VisibilityToolSaveTexture(const String &path)
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->SaveTexture(path);
+}
+
+void SceneEditorScreenMain::VisibilityToolSetPoint()
+{
+	BodyItem *iBody = FindCurrentBody();
+	iBody->bodyControl->VisibilityToolSetPoint();
+}
+
+void SceneEditorScreenMain::VisibilityToolSetArea()
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->VisibilityToolSetArea();
+}
+
+void SceneEditorScreenMain::VisibilityToolSetAreaSize(uint32 size)
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->VisibilityToolSetAreaSize(size);
+}
+
+void SceneEditorScreenMain::ProcessIsSolidChanging()
+{
+	BodyItem *iBody = FindCurrentBody();
+    iBody->bodyControl->ProcessIsSolidChanging();
 }
