@@ -32,7 +32,9 @@
 
 #include "Base/BaseObject.h"
 
-#include <mutex>
+#if !defined(__DAVAENGINE_ANDROID__)
+#   include <mutex>
+#endif
 
 namespace DAVA
 {
@@ -63,7 +65,11 @@ public:
 	*/
 	virtual void Unlock();
 
+#if defined(__DAVAENGINE_ANDROID__)
+    pthread_mutex_t mutex;
+#else
     std::mutex locker;
+#endif //PLATFORMS
 };
 
 };

@@ -29,9 +29,32 @@
 =====================================================================================*/
 #include "Platform/Mutex.h"
 
-
 namespace DAVA
 {
+#if defined(__DAVAENGINE_ANDROID__) /////////////////////////////////////////////////////////////////////////
+
+Mutex::Mutex()
+{
+    //	mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_init(&mutex, 0);
+}
+
+Mutex::~Mutex()
+{
+
+}
+
+void Mutex::Lock()
+{
+    pthread_mutex_lock(&mutex);
+}
+
+void Mutex::Unlock()
+{
+    pthread_mutex_unlock(&mutex);
+}
+
+#else //PLATFORMS //////////////////////////////////////////////////////////////////////////////////////////
 
 Mutex::Mutex()
 {
@@ -51,4 +74,5 @@ void Mutex::Unlock()
 	locker.unlock();
 }
 
+#endif //PLATFORMS //////////////////////////////////////////////////////////////////////////////////////////
 };
