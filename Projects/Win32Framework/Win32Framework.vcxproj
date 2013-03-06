@@ -550,6 +550,7 @@
     <ClInclude Include="..\..\Sources\Internal\UI\UISlider.h" />
     <ClInclude Include="..\..\Sources\Internal\UI\UISpinner.h" />
     <ClInclude Include="..\..\Sources\Internal\UI\UIStaticText.h" />
+    <ClInclude Include="..\..\Sources\Internal\UI\UISwitch.h" />
     <ClInclude Include="..\..\Sources\Internal\UI\UITextField.h" />
     <ClInclude Include="..\..\Sources\Internal\UI\UITextFieldiPhone.h" />
     <ClInclude Include="..\..\Sources\Internal\UI\UIYamlLoader.h" />
@@ -884,6 +885,7 @@
     <ClCompile Include="..\..\Sources\Internal\UI\UISlider.cpp" />
     <ClCompile Include="..\..\Sources\Internal\UI\UISpinner.cpp" />
     <ClCompile Include="..\..\Sources\Internal\UI\UIStaticText.cpp" />
+    <ClCompile Include="..\..\Sources\Internal\UI\UISwitch.cpp" />
     <ClCompile Include="..\..\Sources\Internal\UI\UITextField.cpp" />
     <ClCompile Include="..\..\Sources\Internal\UI\UIYamlLoader.cpp" />
     <ClCompile Include="..\..\Sources\Internal\Utils\MD5.cpp" />

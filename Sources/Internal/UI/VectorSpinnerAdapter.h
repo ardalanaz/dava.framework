@@ -6,6 +6,9 @@
 namespace DAVA
 {
 
+/*
+ * It's an abstract class: you need to implement your display logic in DisplaySelectedData(UISpinner * spinner) to use it.
+ */
 template<typename T> class VectorSpinnerAdapter : public SpinnerAdapter
 {
 public:
