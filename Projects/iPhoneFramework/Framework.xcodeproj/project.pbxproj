@@ -647,6 +647,9 @@
 		E8F21DD116C1971F007F957A /* GlobalEventSystem.h in Headers */ = {isa = PBXBuildFile; fileRef = E8F21DCF16C1971F007F957A /* GlobalEventSystem.h */; };
 		E95B4C5C16DF78EE00880713 /* UISpinner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E95B4C5A16DF78EE00880713 /* UISpinner.cpp */; };
 		E95B4C5D16DF78EE00880713 /* UISpinner.h in Headers */ = {isa = PBXBuildFile; fileRef = E95B4C5B16DF78EE00880713 /* UISpinner.h */; };
+		E9EA49CE16E0D99F00C44B6F /* VectorSpinnerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = E9EA49CD16E0D99F00C44B6F /* VectorSpinnerAdapter.h */; };
+		E9EA49FD16E78E0E00C44B6F /* UISwitch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9EA49FB16E78E0E00C44B6F /* UISwitch.cpp */; };
+		E9EA49FE16E78E0E00C44B6F /* UISwitch.h in Headers */ = {isa = PBXBuildFile; fileRef = E9EA49FC16E78E0E00C44B6F /* UISwitch.h */; };
 		EA7DEDDA144854E900D9E652 /* libfreetype_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EA7DEDD9144854E900D9E652 /* libfreetype_ios.a */; };
 		FEF4D44812C92F57004B850E /* libBox2D_iPhone.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FEF4D38612C91A3A004B850E /* libBox2D_iPhone.a */; };
 /* End PBXBuildFile section */
@@ -1311,6 +1314,9 @@
 		E8F21DCF16C1971F007F957A /* GlobalEventSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalEventSystem.h; sourceTree = "<group>"; };
 		E95B4C5A16DF78EE00880713 /* UISpinner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UISpinner.cpp; sourceTree = "<group>"; };
 		E95B4C5B16DF78EE00880713 /* UISpinner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UISpinner.h; sourceTree = "<group>"; };
+		E9EA49CD16E0D99F00C44B6F /* VectorSpinnerAdapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorSpinnerAdapter.h; sourceTree = "<group>"; };
+		E9EA49FB16E78E0E00C44B6F /* UISwitch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UISwitch.cpp; sourceTree = "<group>"; };
+		E9EA49FC16E78E0E00C44B6F /* UISwitch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UISwitch.h; sourceTree = "<group>"; };
 		EA7DEDD9144854E900D9E652 /* libfreetype_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype_ios.a; path = ../../Libs/freetype/lib/libfreetype_ios.a; sourceTree = "<group>"; };
 		EA7DEDDC1448550100D9E652 /* libfreetype_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype_ios.a; path = ../../Libs/freetype/lib/libfreetype_ios.a; sourceTree = "<group>"; };
 		FEF4D38112C91A3A004B850E /* Box2D_iPhone.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Box2D_iPhone.xcodeproj; path = ../../Libs/Box2D/Projects/Box2D_iPhone/Box2D_iPhone.xcodeproj; sourceTree = SOURCE_ROOT; };
@@ -2208,9 +2214,11 @@
 				E8B3CA6716B9326E002BD35F /* UISlider.h */,
 				E95B4C5A16DF78EE00880713 /* UISpinner.cpp */,
 				E95B4C5B16DF78EE00880713 /* UISpinner.h */,
-				CC24804516E0E34300183D40 /* VectorSpinnerAdapter.h */,
+				E9EA49CD16E0D99F00C44B6F /* VectorSpinnerAdapter.h */,
 				E8B3CA6816B9326E002BD35F /* UIStaticText.cpp */,
 				E8B3CA6916B9326E002BD35F /* UIStaticText.h */,
+				E9EA49FB16E78E0E00C44B6F /* UISwitch.cpp */,
+				E9EA49FC16E78E0E00C44B6F /* UISwitch.h */,
 				E8B3CA6A16B9326E002BD35F /* UITextField.cpp */,
 				E8B3CA6B16B9326E002BD35F /* UITextField.h */,
 				E8B3CA6C16B9326E002BD35F /* UITextFieldiPhone.h */,
@@ -2635,7 +2643,8 @@
 				CC24801616DD17F300183D40 /* UserComponent.h in Headers */,
 				E8BD1F0D16DE4A9C00499E18 /* MailSender.h in Headers */,
 				E95B4C5D16DF78EE00880713 /* UISpinner.h in Headers */,
-				CC24804616E0E34300183D40 /* VectorSpinnerAdapter.h in Headers */,
+				E9EA49CE16E0D99F00C44B6F /* VectorSpinnerAdapter.h in Headers */,
+				E9EA49FE16E78E0E00C44B6F /* UISwitch.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2999,6 +3008,7 @@
 				E8BD1F0C16DE4A9C00499E18 /* MailSender.cpp in Sources */,
 				E8BD1F0E16DE4A9C00499E18 /* MailSenderMacOS.mm in Sources */,
 				E95B4C5C16DF78EE00880713 /* UISpinner.cpp in Sources */,
+				E9EA49FD16E78E0E00C44B6F /* UISwitch.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
