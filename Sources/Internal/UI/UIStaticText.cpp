@@ -46,17 +46,20 @@ UIStaticText::UIStaticText(const Rect &rect, bool rectInAbsoluteCoordinates/* = 
 	, textColor(1.0f, 1.0f, 1.0f, 1.0f)
 	, tempSize(0, 0)
 	, shadowOffset(0, 0)
-	, shadowColor(0, 0, 0, 0)
+	, shadowColor(0, 0, 0, 1)
 {
 	inputEnabled = false;
 	textBlock = TextBlock::Create(Vector2(rect.dx, rect.dy));
 	background->SetAlign(ALIGN_TOP|ALIGN_LEFT);
 	background->SetPerPixelAccuracyType(UIControlBackground::PER_PIXEL_ACCURACY_ENABLED);
+
+	shadowBg = new UIControlBackground();
 }
 
 UIStaticText::~UIStaticText()
 {
 	SafeRelease(textBlock);
+	SafeRelease(shadowBg);
 }
 
 	
@@ -182,8 +185,9 @@ void UIStaticText::Draw(const UIGeometricData &geometricData)
 		shadowGeomData.position += shadowOffset;
 		shadowGeomData.unrotatedRect += shadowOffset;
 
-		background->SetDrawColor(shadowColor);
-		UIControl::Draw(shadowGeomData);
+		shadowBg->SetAlign(background->GetAlign());
+		shadowBg->SetDrawColor(shadowColor);
+		shadowBg->Draw(shadowGeomData);
 	}
 
 	background->SetDrawColor(textColor);
